@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Carnet de bord</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<script>(function(){try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("carnet-theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}})();</script>
+<style>
+/* Carnet de bord v2 : pastel, animé. Tokens réutilisables (clair / sombre). */
+:root{
+  --bg:#fbf8f4; --surface:#ffffff; --surface-2:#f4f0ea; --line:#ece6dd; --line-strong:#d3cabd;
+  --fg:#1f1b2d; --muted:#625d70; --accent:#4f3fc4; --accent-fg:#ffffff; --accent-bg:#ece9ff;
+  --good:#1f7a52; --good-bg:#dcf5e8; --warn:#9a5600; --warn-bg:#ffedd5; --bad:#b4323f; --bad-bg:#ffe1e4;
+  --subject-1:#1a5d9a; --subject-2:#b8560f; --subject-3:#2f9a8a; --subject-4:#a65cc0; --subject-5:#7d9a1f; --subject-6:#a8325a; --subject-7:#3b3f47;
+  --pastel-1:#ffd9c7; --pastel-2:#dcd5ff; --pastel-3:#c8efdd; --pastel-4:#cfe5ff; --pastel-5:#fff0b3; --pastel-6:#ffd5e6;
+  --tint:14%; --tip-bg:#ffffff; --tip-fg:#1f1b2d; --shimmer:rgba(255,255,255,.75); --blob-o:.6;
+  --shadow:0 1px 2px rgba(31,27,45,.04),0 10px 30px -12px rgba(31,27,45,.14);
+  --shadow-lift:0 2px 4px rgba(31,27,45,.05),0 24px 44px -18px rgba(31,27,45,.3);
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;
+  --f-data:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px; --sp-8:64px;
+  --r-1:12px; --r-2:24px; --r-pill:999px; --ease:cubic-bezier(.2,.7,.2,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14121c; --surface:#1d1a28; --surface-2:#272336; --line:#322d44; --line-strong:#4a4462;
+  --fg:#f2eff8; --muted:#aaa4bd; --accent:#b9adff; --accent-fg:#14121c; --accent-bg:#2c2650;
+  --good:#7fe0b0; --good-bg:#173a2a; --warn:#ffc27a; --warn-bg:#3d2a14; --bad:#ff9aa5; --bad-bg:#43202a;
+  --subject-1:#5a8fe0; --subject-2:#f39343; --subject-3:#62d3c3; --subject-4:#d6a0f5; --subject-5:#b9d64f; --subject-6:#ef6f93; --subject-7:#e8e4dc;
+  --pastel-1:#5a3427; --pastel-2:#3a3170; --pastel-3:#1f4a3a; --pastel-4:#22406a; --pastel-5:#4d4420; --pastel-6:#5a2742;
+  --tint:20%; --tip-bg:#272336; --tip-fg:#f2eff8; --shimmer:rgba(255,255,255,.06); --blob-o:.45;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -12px rgba(0,0,0,.6); --shadow-lift:0 24px 48px -18px rgba(0,0,0,.8); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14121c; --surface:#1d1a28; --surface-2:#272336; --line:#322d44; --line-strong:#4a4462;
+  --fg:#f2eff8; --muted:#aaa4bd; --accent:#b9adff; --accent-fg:#14121c; --accent-bg:#2c2650;
+  --good:#7fe0b0; --good-bg:#173a2a; --warn:#ffc27a; --warn-bg:#3d2a14; --bad:#ff9aa5; --bad-bg:#43202a;
+  --subject-1:#5a8fe0; --subject-2:#f39343; --subject-3:#62d3c3; --subject-4:#d6a0f5; --subject-5:#b9d64f; --subject-6:#ef6f93; --subject-7:#e8e4dc;
+  --pastel-1:#5a3427; --pastel-2:#3a3170; --pastel-3:#1f4a3a; --pastel-4:#22406a; --pastel-5:#4d4420; --pastel-6:#5a2742;
+  --tint:20%; --tip-bg:#272336; --tip-fg:#f2eff8; --shimmer:rgba(255,255,255,.06); --blob-o:.45;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -12px rgba(0,0,0,.6); --shadow-lift:0 24px 48px -18px rgba(0,0,0,.8); color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+/* Échelle d'affichage globale : 0.85 par défaut, ajustable avec ?echelle=0.75 */
+@media (min-width:900px){.app{zoom:var(--zoom,.85)}}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 16px/1.55 var(--f-body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+p,h1,h2,h3,ul,ol,dl,dd,figure{margin:0}
+p{text-wrap:pretty}
+a{color:var(--accent);text-underline-offset:3px}
+a:hover{color:var(--fg)}
+button{font:inherit;color:inherit}
+svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+svg .fill{fill:currentColor;stroke:none}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:8px}
+[tabindex="-1"]:focus{outline:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:8px;top:-80px;z-index:20;padding:12px 16px;background:var(--surface);border-radius:var(--r-1);font-weight:700}
+.skip:focus{top:8px}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+
+/* Fond pastel animé */
+.blobs{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.blobs i{position:absolute;width:44vmax;height:44vmax;border-radius:50%;filter:blur(72px);opacity:var(--blob-o);animation:drift 24s ease-in-out infinite alternate}
+.blobs i:nth-child(1){background:var(--pastel-1);top:-16vmax;left:-12vmax}
+.blobs i:nth-child(2){background:var(--pastel-2);top:-10vmax;right:-16vmax;animation-delay:-8s}
+.blobs i:nth-child(3){background:var(--pastel-3);bottom:-22vmax;left:18vw;animation-delay:-14s}
+.blobs i:nth-child(4){background:var(--pastel-4);bottom:-16vmax;right:-10vmax;animation-delay:-4s}
+@keyframes drift{to{transform:translate(5vmax,4vmax) scale(1.1)}}
+
+/* Typographie */
+.t-label{font:700 12px/1.2 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+h1{font:800 34px/1.05 var(--f-display);letter-spacing:-.025em;text-wrap:balance}
+h2{font:700 22px/1.2 var(--f-display);letter-spacing:-.01em;text-wrap:balance}
+.t-h3{font:700 18px/1.3 var(--f-body)}
+.t-meta{font-size:14px;line-height:1.45;color:var(--muted)}
+.lede{font-size:17px;line-height:1.5;max-width:60ch;color:var(--muted)}
+
+/* Structure */
+.app{max-width:1520px;margin:0 auto;padding:var(--sp-4) var(--sp-4) calc(112px + env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-5)}
+.who{display:flex;align-items:center;gap:var(--sp-3);min-width:0;flex:1}
+.who-t{display:grid;min-width:0}
+.who-n{font:700 17px/1.25 var(--f-body)}
+.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;font:800 20px/1 var(--f-display);color:var(--fg);background:linear-gradient(135deg,var(--pastel-1),var(--pastel-2) 55%,var(--pastel-3));box-shadow:inset 0 0 0 2px var(--surface)}
+.tag{display:inline-block;padding:0 8px;border-radius:var(--r-pill);background:var(--warn-bg);color:var(--warn);font-weight:700}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface);cursor:pointer;flex:none;box-shadow:var(--shadow);transition:transform .3s var(--ease)}
+.icon-btn:hover{transform:rotate(25deg)}
+.icon-btn svg{width:20px;height:20px}
+/* Actions locales (visibles uniquement quand le mini-serveur tourne) */
+/* Widgets déplaçables (clic gauche maintenu) */
+.grid>[data-w]{cursor:grab;-webkit-user-drag:none}
+.grid>[data-w] a{-webkit-user-drag:none}
+.drag-src{opacity:.35;outline:2px dashed var(--accent);outline-offset:-2px}
+.drag-ghost{position:fixed;z-index:60;left:0;top:0;pointer-events:none;padding:8px 16px;border-radius:999px;background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:14px;box-shadow:var(--shadow);white-space:nowrap}
+body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!important;-webkit-user-select:none!important}
+.drag-hint{margin-top:var(--sp-4)}
+.linkbtn{padding:0;border:0;background:none;color:var(--accent);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+
+.actions{display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:center}
+.actions[hidden]{display:none}
+.act{display:inline-flex;align-items:center;gap:var(--sp-2);min-height:44px;padding:0 var(--sp-4);border:1px solid var(--line-strong);border-radius:var(--r-pill);background:var(--surface);color:var(--fg);font:inherit;font-weight:700;font-size:.9rem;cursor:pointer;transition:transform .3s var(--ease)}
+.act:hover{transform:translateY(-2px)}
+.act.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.act[disabled]{opacity:.65;cursor:progress;transform:none}
+.act svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.top{flex-wrap:wrap}.actions{order:9;flex-basis:100%}
+@media (min-width:900px){.top{flex-wrap:nowrap}.actions{order:0;flex-basis:auto;flex-direction:column;align-items:stretch}}
+.act.busy svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.act.busy svg{animation:none}}
+.toast{position:fixed;left:50%;bottom:var(--sp-5);transform:translateX(-50%);max-width:min(92vw,520px);padding:var(--sp-3) var(--sp-4);border-radius:16px;background:var(--fg);color:var(--bg);box-shadow:var(--shadow);font-weight:600;z-index:50}
+.toast[hidden]{display:none}
+.synth{width:min(92vw,640px);max-height:80vh;padding:var(--sp-5);border:1px solid var(--line);border-radius:24px;background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+.synth::backdrop{background:rgba(20,16,40,.45)}
+.synth h2{margin:0 0 var(--sp-3);font-size:1.1rem}
+.synth pre{margin:0 0 var(--sp-4);max-height:55vh;overflow:auto;white-space:pre-wrap;font:inherit;font-size:.92rem;line-height:1.5}
+
+.tabs{position:fixed;left:var(--sp-4);right:var(--sp-4);bottom:calc(12px + env(safe-area-inset-bottom));z-index:10;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px;border-radius:var(--r-pill);border:1px solid var(--line);background:color-mix(in oklab,var(--surface) 82%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:var(--shadow-lift)}
+.tab{min-height:52px;display:flex;align-items:center;justify-content:center;gap:var(--sp-2);border-radius:var(--r-pill);font-weight:700;color:var(--muted);text-decoration:none;transition:background .25s,color .25s}
+.tab:hover{color:var(--fg)}
+.tab[aria-current="page"]{background:var(--fg);color:var(--bg)}
+.count{min-width:22px;height:22px;padding:0 7px;border-radius:var(--r-pill);background:var(--pastel-6);color:#5a1636;font:800 13px/22px var(--f-body);text-align:center}
+.view{display:grid;gap:var(--sp-4)}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--sp-4)}
+.grid>*{grid-column:1/-1;min-width:0}
+.grid>.m-6{grid-column:span 6}
+.page-h{display:grid;gap:var(--sp-2)}
+.hello{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--sp-4)}
+.hello .seg{flex:1 1 100%}
+.h-subj{display:flex;align-items:center;gap:var(--sp-3)}
+.back{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-weight:700;text-decoration:none;justify-self:start}
+.link{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-weight:700;text-decoration:none}
+.link svg{transition:transform .25s var(--ease)}
+.link:hover svg{transform:translateX(4px)}
+
+/* Cartes */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-2);padding:20px;min-width:0;box-shadow:var(--shadow);transition:transform .3s var(--ease),box-shadow .3s var(--ease)}
+a.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
+.tint{background:color-mix(in oklab,var(--c) var(--tint),var(--surface));border-color:transparent}
+.card-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 var(--sp-3);margin-bottom:var(--sp-3)}
+.card-h .t-meta{flex-basis:100%}
+.hero{border-color:transparent;display:grid;gap:var(--sp-3);align-content:start;
+  background:radial-gradient(110% 130% at 0% 0%,var(--pastel-1) 0%,transparent 55%),radial-gradient(110% 130% at 100% 0%,var(--pastel-2) 0%,transparent 55%),radial-gradient(130% 110% at 50% 115%,var(--pastel-3) 0%,transparent 60%),var(--surface)}
+.hero-ring{grid-template-columns:1fr;align-items:center;gap:var(--sp-4)}
+.hero-main{display:grid;gap:var(--sp-3);min-width:0}
+.ring-w{position:relative;width:176px;height:176px;justify-self:center;order:-1}
+.ring{width:100%;height:100%;stroke-width:11}
+.ring-t{stroke:color-mix(in oklab,var(--surface) 72%,transparent)}
+.ring-v{stroke:var(--accent);stroke-linecap:round;animation:ring 1.4s var(--ease) both;animation-delay:.15s}
+@keyframes ring{from{stroke-dashoffset:var(--len)}}
+.ring-n{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:2px}
+.hero-v{display:flex;align-items:baseline;gap:var(--sp-2)}
+.hero-big{font:800 52px/1 var(--f-display);letter-spacing:-.04em;color:var(--fg)}
+.hero-v .hero-big{font-size:64px}
+.hero-unit{font:700 14px var(--f-body);color:var(--muted)}
+.hero-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-3)}
+.hero-sum{font-size:17px;font-weight:600;max-width:44ch}
+.wins{display:flex;flex-wrap:wrap;gap:6px}
+.win{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:var(--r-pill);background:color-mix(in oklab,var(--c) 22%,var(--surface));font-size:14px;font-weight:700}
+.win svg{color:var(--good)}
+.facts{display:flex;flex-wrap:wrap;gap:var(--sp-2)}
+.facts div{display:grid;gap:0;padding:8px 14px;border-radius:var(--r-1);background:color-mix(in oklab,var(--surface) 70%,transparent)}
+.facts dt{font-size:13px;color:var(--muted)}
+.facts dd{font:800 18px/1.25 var(--f-data);font-variant-numeric:tabular-nums}
+.delta{display:inline-flex;align-items:center;gap:6px;justify-self:start;padding:4px 12px 4px 10px;border-radius:var(--r-pill);font-weight:700;font-size:15px}
+.delta.up{color:var(--good);background:var(--good-bg)} .delta.down{color:var(--warn);background:var(--warn-bg)} .delta.flat{color:var(--muted);background:var(--surface-2)}
+.kpi{display:grid;gap:var(--sp-2);align-content:start;text-decoration:none;color:inherit}
+a.kpi:hover{color:inherit}
+.kpi-subj{display:flex;align-items:center;gap:var(--sp-2);font:700 17px/1.3 var(--f-body);overflow-wrap:break-word;min-width:0}
+.kpi-v{font:800 40px/1 var(--f-display);letter-spacing:-.03em}
+.kpi-v small,.subj-v small{font:700 15px var(--f-body);color:var(--muted);margin-left:3px;letter-spacing:0}
+.dot{display:inline-block;width:12px;height:12px;background:var(--c,var(--muted));border-radius:50%;flex:none}
+.sh-1{width:11px;height:11px;border-radius:2px}
+.sh-2{border-radius:0;clip-path:polygon(50% 4%,100% 96%,0 96%)}
+.sh-3{border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.sh-4{border-radius:0;clip-path:polygon(0 4%,100% 4%,50% 96%)}
+.sh-5{border-radius:0;clip-path:polygon(20% 0,50% 30%,80% 0,100% 20%,70% 50%,100% 80%,80% 100%,50% 70%,20% 100%,0 80%,30% 50%,0 20%)}
+.sh-6{border-radius:0;clip-path:polygon(36% 0,64% 0,64% 36%,100% 36%,100% 64%,64% 64%,64% 100%,36% 100%,36% 64%,0 64%,0 36%,36% 36%)}
+.dot-lg{width:22px;height:22px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px 0 10px;border-radius:var(--r-pill);font:700 14px/1 var(--f-body);white-space:nowrap}
+.b-up{background:var(--good-bg);color:var(--good)}
+.b-flat{background:color-mix(in oklab,var(--surface) 80%,transparent);color:var(--muted)}
+.b-down{background:var(--warn-bg);color:var(--warn)}
+.b-few{border:1.5px dashed var(--line-strong);color:var(--muted)}
+.b-exam{background:var(--accent-bg);color:var(--accent)}
+.b-exam svg{width:10px;height:10px}
+.b-late{background:var(--bad-bg);color:var(--bad)}
+.b-done{color:var(--good);padding:0}
+
+/* Matières */
+.sec-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--sp-2) var(--sp-4);margin-bottom:var(--sp-3)}
+.subjects{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:var(--sp-4)}
+.subj{display:grid;gap:var(--sp-2);text-decoration:none;color:inherit}
+.subj:hover{color:inherit}
+.subj-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-2)}
+.subj-n{display:flex;align-items:center;gap:var(--sp-2);font-weight:700;min-width:0;overflow-wrap:break-word}
+.subj-v{font:800 36px/1 var(--f-display);letter-spacing:-.03em;margin-top:var(--sp-1)}
+.subj.is-few .subj-v{color:var(--muted)}
+.meter{position:relative;height:10px;border-radius:var(--r-pill);background:color-mix(in oklab,var(--surface) 78%,transparent);margin:var(--sp-2) 0 var(--sp-1)}
+.card:not(.tint):not(.hero) .meter{background:var(--surface-2)}
+.meter-fill{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:var(--c);transform-origin:left;animation:grow 1.1s var(--ease) both;animation-delay:.2s}
+@keyframes grow{from{transform:scaleX(0)}}
+.meter-mark{position:absolute;top:-5px;bottom:-5px;width:4px;margin-left:-2px;background:var(--fg);border-radius:2px;box-shadow:0 0 0 2px var(--surface)}
+.mark-key{display:inline-flex;align-items:center;gap:var(--sp-2)}
+.mark-key i{width:4px;height:16px;background:var(--fg);border-radius:2px}
+
+/* Devoirs */
+.g-h{display:flex;align-items:center;gap:var(--sp-2);font:700 12px/1.2 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:var(--sp-4) 0 var(--sp-2)}
+.g-h.late{color:var(--bad)}
+.hw-list{list-style:none;padding:0;display:grid;gap:var(--sp-2)}
+.hw{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:2px var(--sp-3);align-items:start;padding:12px 14px;border-radius:16px;background:color-mix(in oklab,var(--c,var(--muted)) 11%,var(--surface));transition:transform .25s var(--ease)}
+.hw:hover{transform:translateX(4px)}
+.hw>.dot{margin-top:5px}
+.hw-s{font-size:14px;font-weight:700}
+.hw-src{font-weight:500;color:var(--muted)}
+.hw-t{overflow-wrap:break-word;font-weight:500}
+.hw-d{font-size:14px;color:var(--muted)}
+.hw-d.is-late{color:var(--bad);font-weight:700}
+.hw.is-done{opacity:.75}
+.hw.is-done .hw-t{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong)}
+.hw-x{display:grid;justify-items:end;gap:var(--sp-1)}
+.g-title{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:2px}
+.g-title.late{color:var(--bad)}
+.g-title svg{width:18px;height:18px}
+.g-n{margin-left:auto;min-width:30px;height:30px;padding:0 10px;border-radius:var(--r-pill);background:var(--surface-2);display:grid;place-items:center;font:800 14px var(--f-body);color:var(--fg)}
+.hw-g .hw-list{margin-top:var(--sp-3)}
+.hw-layout{display:grid;gap:var(--sp-4)}
+.hw-main{display:grid;gap:var(--sp-4);align-content:start}
+.days{list-style:none;padding:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:var(--sp-3) 0}
+.day{display:grid;justify-items:center;gap:2px;padding:10px 0;border-radius:16px;background:var(--surface-2);transition:transform .25s var(--ease)}
+.day:not(.is-empty){background:linear-gradient(180deg,var(--pastel-2),var(--pastel-4))}
+.day:hover{transform:translateY(-3px)}
+.day-w{font-size:13px;font-weight:600;color:var(--muted)}
+.day:not(.is-empty) .day-w{color:var(--fg)}
+.day-n{font:800 20px/1.2 var(--f-display)}
+.day.is-empty .day-n{color:var(--muted);font-weight:500}
+.pips{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;min-height:10px;align-items:center;padding:0 2px}
+.pip{width:7px;height:7px;border-radius:50%;background:var(--fg)}
+.pip.ex{width:10px;height:10px;border-radius:0;background:var(--accent);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.src-list{list-style:none;padding:0;display:grid;margin-top:var(--sp-2)}
+.src-list li{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:48px;border-top:1px solid var(--line)}
+.src-list li:first-child{border-top:0}
+
+/* Contrôles */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-pill);box-shadow:var(--shadow)}
+.seg button{min-height:44px;border:0;background:none;border-radius:var(--r-pill);font-weight:700;color:var(--muted);cursor:pointer;padding:0 var(--sp-4);white-space:nowrap;transition:background .25s,color .25s}
+.seg button:hover{color:var(--fg);background:var(--surface-2)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg .long{display:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);min-height:48px;padding:0 var(--sp-5);border:0;border-radius:var(--r-pill);background:var(--fg);color:var(--bg);font-weight:700;cursor:pointer;justify-self:start;transition:transform .25s var(--ease)}
+.btn:hover{transform:translateY(-2px)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--sp-3)}
+.chip{display:inline-flex;align-items:center;gap:var(--sp-2);min-height:44px;padding:0 14px;border:1px solid transparent;border-radius:var(--r-pill);background:color-mix(in oklab,var(--c) 16%,var(--surface));cursor:pointer;font-size:14px;font-weight:700;transition:transform .2s var(--ease),background .2s}
+.chip:hover{transform:translateY(-2px)}
+.chip[aria-pressed="false"]{color:var(--muted);border:1px dashed var(--line-strong);background:transparent}
+.chip[aria-pressed="false"] .dot{opacity:.3}
+.keys{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4);margin-bottom:var(--sp-3);font-size:14px;color:var(--muted)}
+.key{display:inline-flex;align-items:center;gap:var(--sp-2)}
+.kl{width:20px;height:0;border-top:3px solid var(--c);border-radius:2px}
+.kl.dash{border-top:2px dashed var(--muted)}
+
+/* Graphiques et infobulle */
+.chart{position:relative;height:280px}
+.chart.is-off{height:auto}
+.chart.is-off canvas{display:none}
+.chart.is-off::before{content:"Graphique indisponible sans connexion. Les valeurs sont dans le tableau ci-dessous.";display:block;padding:var(--sp-4);border-radius:var(--r-1);background:var(--surface-2);color:var(--muted)}
+.tip{position:absolute;z-index:5;pointer-events:none;width:max-content;min-width:184px;max-width:248px;padding:12px 14px;border-radius:16px;background:var(--tip-bg);color:var(--tip-fg);border:1px solid var(--line);box-shadow:var(--shadow-lift);font-size:14px;line-height:1.4;transform:translate(-50%,calc(-100% - 14px))}
+.tip.below{transform:translate(-50%,14px)}
+.tip-s{display:flex;align-items:center;gap:6px;font-weight:800}
+.tip-m{color:var(--muted)}
+.tip-row{display:flex;justify-content:space-between;gap:var(--sp-3);margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.tip-row b{font:800 16px var(--f-data);margin-left:4px}
+details.data{margin-top:var(--sp-3)}
+details.data summary{min-height:44px;display:inline-flex;align-items:center;cursor:pointer;color:var(--accent);font-weight:700}
+
+/* Nouvelles notes de la semaine */
+.wk-new{display:grid;grid-template-rows:auto 1fr;align-content:start}
+.wk-sum{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-3)}
+.wk-list{list-style:none;padding:0;display:grid;gap:6px;max-height:352px;overflow-y:auto}
+.wk-it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px var(--sp-3);align-items:center;padding:8px 14px;border-radius:14px;background:color-mix(in oklab,var(--c,var(--muted)) 11%,var(--surface));text-decoration:none;color:inherit;transition:transform .25s var(--ease)}
+.wk-it>p{grid-column:1;min-width:0}
+a.wk-it:hover{transform:translateX(3px)}
+.wk-s{display:flex;align-items:center;gap:var(--sp-2);font-weight:700;font-size:14px}
+.wk-d{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wk-v{grid-row:1 / span 3;grid-column:2;text-align:right;display:grid;justify-items:end;gap:4px}
+.wk-n{font:800 24px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.wk-n small{font:600 13px var(--f-body);color:var(--muted)}
+.wk-cmp{font:700 12px/1 var(--f-body);padding:3px 8px;border-radius:var(--r-pill);white-space:nowrap}
+.wk-cmp.up{color:var(--good);background:var(--good-bg)} .wk-cmp.down{color:var(--warn);background:var(--warn-bg)} .wk-cmp.flat{color:var(--muted);background:var(--surface-2)}
+.wk-new .empty-w{color:var(--muted)}
+/* Tableaux */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font:700 12px/1.2 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 var(--sp-2) var(--sp-2);border-bottom:1px solid var(--line)}
+.tbl td{padding:var(--sp-3) var(--sp-2);border-bottom:1px solid var(--line);vertical-align:baseline}
+.tbl tbody tr{transition:background .2s}
+.tbl tbody tr:hover{background:var(--surface-2)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .r{text-align:right}
+.tbl .strong{font-weight:800}
+.cell-s{display:inline-flex;align-items:center;gap:var(--sp-2);font-weight:700}
+.nl{list-style:none;padding:0}
+.nl li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--sp-3);align-items:center;padding:var(--sp-3) 0;border-top:1px solid var(--line)}
+.nl li:first-child{border-top:0}
+.nl-s{display:flex;align-items:center;gap:var(--sp-2);font-weight:700}
+.nl-v{font:800 22px/1 var(--f-display);text-align:right}
+.nl-v small{font:600 13px var(--f-body);color:var(--muted)}
+.only-wide{display:none}
+.tbl-wrap{overflow-x:auto;max-width:100%}
+
+/* États */
+.empty{display:grid;gap:var(--sp-3);padding:var(--sp-6) var(--sp-5);text-align:left}
+.empty p{max-width:52ch}
+.empty-hint{padding:var(--sp-3) var(--sp-4);border-radius:var(--r-1);background:var(--accent-bg)}
+.notice{display:flex;gap:var(--sp-3);padding:var(--sp-4);border-radius:20px;background:var(--warn-bg)}
+.notice>svg{width:20px;height:20px;color:var(--warn);margin-top:2px}
+.notice-t{font-weight:800}
+.sk{background:var(--surface-2);border-radius:var(--r-2);position:relative;overflow:hidden}
+.sk::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,var(--shimmer),transparent);animation:shimmer 1.4s infinite}
+.sk-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+@keyframes shimmer{to{transform:translateX(100%)}}
+.rise{animation:rise .6s var(--ease) both;animation-delay:calc(var(--i,0) * 70ms)}
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.985)}}
+
+@media (min-width:560px){
+  .hero-ring{grid-template-columns:minmax(0,1fr) auto}
+  .ring-w{order:0;justify-self:end}
+}
+@media (min-width:720px){
+  .grid{gap:var(--sp-5)}
+  .card{padding:var(--sp-5)}
+  .hello .seg{flex:0 1 auto}
+  .seg .long{display:inline}
+  .seg .short{display:none}
+  .only-wide{display:table}
+  .only-narrow{display:none}
+}
+@media (min-width:900px){
+  .app{padding:var(--sp-6) var(--sp-6) var(--sp-8)}
+  .tabs{position:static;display:flex;gap:4px;background:var(--surface);box-shadow:var(--shadow);-webkit-backdrop-filter:none;backdrop-filter:none}
+  .tab{min-height:44px;padding:0 var(--sp-5)}
+}
+@media (min-width:1024px){
+  h1{font-size:48px}
+  h2{font-size:24px}
+  .ring-w{width:208px;height:208px}
+  .hero-big{font-size:64px}
+  .hero-v .hero-big{font-size:84px}
+  .chart{height:320px}
+  .grid>.l-3{grid-column:span 3} .grid>.l-5{grid-column:span 5} .grid>.l-6{grid-column:span 6} .grid>.l-7{grid-column:span 7}
+  .hw-layout{grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-5);align-items:start}
+  .hw-main{grid-column:1;grid-row:1 / span 2}
+  .strip,.srcs{grid-column:2}
+}
+@media (min-width:1100px){
+  .app{display:grid;grid-template-columns:256px minmax(0,1fr);gap:var(--sp-6);align-items:start;padding:var(--sp-5) var(--sp-6) var(--sp-8)}
+  .top{position:sticky;top:var(--sp-5);flex-direction:column;align-items:stretch;gap:var(--sp-5);margin:0;padding:var(--sp-5);min-height:min(620px,calc(100vh - 48px));background:color-mix(in oklab,var(--surface) 88%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow)}
+  .who{flex-direction:column;align-items:flex-start;flex:none}
+  .avatar{width:72px;height:72px;font-size:32px}
+  .who-n{font:800 26px/1.1 var(--f-display);letter-spacing:-.02em;margin-top:2px}
+  .tabs{flex-direction:column;gap:4px;padding:0;background:none;border:0;box-shadow:none}
+  .tab{justify-content:space-between;min-height:52px;padding:0 var(--sp-4);border-radius:16px}
+  .tab:hover{background:var(--surface-2)}
+  .tab[aria-current="page"]{background:var(--fg);color:var(--bg)}
+  .icon-btn{margin-top:auto;align-self:flex-start}
+  .main-col{min-width:0}
+}
+@media (min-width:1024px) and (max-width:1359px){
+  .grid>.l-6,.grid>.l-5,.grid>.l-7{grid-column:1/-1}
+  .grid>.l-3{grid-column:span 6}
+}
+@media (min-width:1440px){
+  .hero-v .hero-big{font-size:96px}
+  .chart{height:360px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#4f3fc4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Carnet">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<style>
+.vs-form{display:grid;gap:var(--sp-3)}
+.vs-form label{display:grid;gap:var(--sp-1);font-weight:700;font-size:.9rem}
+.vs-form input:not([type=checkbox]){min-height:48px;padding:0 var(--sp-3);border:1px solid var(--line-strong);border-radius:var(--r-1);background:var(--surface-2);color:var(--fg);font:inherit;font-size:16px}
+.vs-form input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.vs-form .vs-check{display:flex;align-items:center;gap:var(--sp-2);font-weight:600}
+.vs-form .vs-check input{width:20px;height:20px;accent-color:var(--accent)}
+.vs-err{margin:0;padding:var(--sp-2) var(--sp-3);border-radius:var(--r-1);background:var(--bad-bg);color:var(--bad);font-weight:600}
+.vs-choices{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-3)}
+.vs-login::backdrop{background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(6px)}
+@media (max-width:899px){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}
+</style>
+</head>
+<body>
+<div class="blobs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<a class="skip" href="#main">Aller au contenu</a>
+<div class="app">
+  <header class="top" id="top">
+    <div class="who" id="who"><p class="t-label">Carnet de bord</p><p class="who-n">Chargement…</p></div>
+    <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+    <div class="actions" id="actions" hidden>
+      <button class="act primary" id="act-sync" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 10a6.5 6.5 0 1 1-2-4.7M16.5 3.5v3h-3"/></svg><span>Actualiser</span></button>
+      <button class="act" id="act-resume" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3.5h10v13H5zM7.5 7.5h5M7.5 10.5h5M7.5 13.5h3"/></svg><span>Synthèse</span></button>
+      <button class="act" id="act-mobile" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="2.5" width="8" height="15" rx="2"/><path d="M9 14.5h2"/></svg><span>Mobile</span></button>
+    </div>
+    <button class="icon-btn" id="theme" type="button" aria-label="Changer de thème"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path class="fill" d="M10 3a7 7 0 0 1 0 14z"/></svg></button>
+  </header>
+  <main id="main" class="view main-col" aria-busy="true">
+    <p class="t-meta" role="status">Chargement du carnet…</p>
+    <div class="sk" style="height:52px;border-radius:999px"></div>
+    <div class="sk" style="height:240px"></div>
+    <div class="sk-row"><div class="sk" style="height:150px"></div><div class="sk" style="height:150px"></div></div>
+    <div class="sk" style="height:320px"></div>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<dialog class="synth" id="mob" aria-labelledby="mob-t"><h2 id="mob-t">Ouvrir sur le téléphone</h2><div id="mob-body"></div><button class="act primary" type="button" id="mob-close">Fermer</button></dialog>
+<dialog class="synth" id="synth" aria-labelledby="synth-t"><h2 id="synth-t">Synthèse</h2><pre id="synth-body"></pre><button class="act primary" type="button" id="synth-close">Fermer</button></dialog>
+
+<script>
+// ── Version mobile : le téléphone interroge Ecole Directe lui-même (via /api/ed) ──
+// Remplace le mini-serveur du PC : les appels /api/* du dashboard sont traités ici, dans le navigateur.
+(() => {
+  const LS = {
+    get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+    set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  };
+  const API_VERSION = "4.75.0", DAYS = 21, STALE_MS = 3 * 3600e3;
+
+  // Clé du relais : fournie une fois dans le lien d'installation (?k=…), puis mémorisée et retirée de l'adresse
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("k")) { LS.set("vs-key", qs.get("k")); qs.delete("k"); history.replaceState(null, "", location.pathname + (qs.toString() ? "?" + qs : "") + location.hash); }
+  window.VS_DATA = LS.get("vs-data");
+
+  const origFetch = window.fetch.bind(window);
+  const b64 = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+  const unb64 = (s) => new TextDecoder().decode(Uint8Array.from(atob(s), (c) => c.charCodeAt(0)));
+  const num = (v) => { const x = parseFloat(String(v ?? "").replace(",", ".")); return Number.isFinite(x) ? x : null; };
+  const isoD = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const fr = (d) => new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+  const f1 = (x) => (x == null ? "—" : x.toFixed(1).replace(".", ","));
+  const htmlToText = (h) => { const d = new DOMParser().parseFromString(h.replace(/<br\s*\/?>|<\/p>|<\/li>/gi, " "), "text/html"); return (d.body.textContent || "").replace(/\s+/g, " ").trim(); };
+
+  class NeedLogin extends Error {}
+
+  // ── Client Ecole Directe (même logique que src/ecoledirecte/client.ts) ──
+  let S = LS.get("vs-session") || {};
+  let memCreds = null;
+  const creds = () => memCreds || LS.get("vs-creds");
+  const saveS = () => LS.set("vs-session", S);
+
+  async function relay(path, data, get) {
+    const key = LS.get("vs-key");
+    if (!key) throw new Error("Clé d'accès absente : ouvrez une fois le lien d'installation complet (avec ?k=…).");
+    let r;
+    try {
+      r = await origFetch("/api/ed", { method: "POST", headers: { "Content-Type": "application/json", "X-VS-Key": key },
+        body: JSON.stringify({ path, data, get: !!get, v: API_VERSION, cookies: S.cookies || {}, token: S.token, twoFaToken: S.twoFaToken }) });
+    } catch (e) { throw new Error("Pas de connexion internet."); }
+    if (r.status === 401) throw new Error("Clé d'accès refusée : rouvrez le lien d'installation.");
+    if (!r.ok) throw new Error(`Relais indisponible (${r.status}).`);
+    const j = await r.json();
+    S.cookies = { ...(S.cookies || {}), ...(j.cookies || {}) };
+    if (j.xToken) S.token = j.xToken;
+    if (j.json?.token) S.token = j.json.token;
+    return j.json || {};
+  }
+
+  async function login() {
+    const c = creds();
+    if (!c) throw new NeedLogin();
+    S = { cn: S.cn, cv: S.cv, cookies: {} };
+    await relay("login.awp?gtk=1", null, true);
+    const r = await relay("login.awp", { identifiant: c.u, motdepasse: c.p, isReLogin: false, uuid: "",
+      fa: S.cn && S.cv ? [{ cn: S.cn, cv: S.cv }] : [] });
+    if (r.code === 250) {
+      S.twoFaToken = S.token;
+      const q = await relay("connexion/doubleauth.awp?verbe=get", {});
+      if (q.code !== 200) throw new Error(q.message || "Question de sécurité indisponible.");
+      saveS();
+      return { status: "2fa", question: unb64(q.data.question), choices: q.data.propositions.map(unb64) };
+    }
+    if (r.code !== 200) throw new Error(r.code === 505 ? "Identifiant ou mot de passe incorrect." : r.message || `Connexion refusée (${r.code}).`);
+    S.twoFaToken = undefined;
+    const acc = r.data.accounts[0], eleves = acc.profile?.eleves ?? [];
+    const el = acc.typeCompte === "E" || !eleves.length ? acc : eleves[0];
+    S.accountId = el.id; S.accountName = `${el.prenom} ${el.nom}`;
+    S.classe = (acc.typeCompte === "E" ? acc.profile?.classe?.libelle : el.classe?.libelle) || "";
+    saveS();
+    return { status: "ok" };
+  }
+
+  async function answer2fa(choice) {
+    const a = await relay("connexion/doubleauth.awp?verbe=post", { choix: b64(choice) });
+    if (a.code !== 200) throw new Error(a.message || "Mauvaise réponse, réessayez.");
+    S.cn = a.data.cn; S.cv = a.data.cv; S.twoFaToken = undefined; saveS();
+    return login();
+  }
+
+  async function call(path, data = {}) {
+    if (!S.token || !S.accountId) { const l = await login(); if (l.status !== "ok") throw new NeedLogin(); }
+    let r = await relay(path, data);
+    if (r.code === 520 || r.code === 525) { // jeton expiré : reconnexion une fois
+      const l = await login(); if (l.status !== "ok") throw new NeedLogin();
+      r = await relay(path, data);
+    }
+    if (r.code !== 200) throw new Error(r.message || `Erreur Ecole Directe (${r.code}).`);
+    return r.data;
+  }
+
+  // ── Synchro (même résultat que scripts/sync.mjs) ──
+  async function sync() {
+    const today = new Date(), from = isoD(today), to = isoD(new Date(today.getTime() + DAYS * 864e5));
+    const d = await call(`eleves/${S.accountId}/notes.awp?verbe=get`, { anneeScolaire: "" });
+    const agenda = await call(`Eleves/${S.accountId}/cahierdetexte.awp?verbe=get`, {});
+    const dates = Object.keys(agenda ?? {}).filter((x) => x >= from && x <= to).sort();
+    const days = [];
+    for (let i = 0; i < dates.length; i += 4) // 4 jours à la fois
+      days.push(...await Promise.all(dates.slice(i, i + 4).map((dt) => call(`Eleves/${S.accountId}/cahierdetexte/${dt}.awp?verbe=get`, {}).then((x) => [dt, x]))));
+    const hw = [];
+    for (const [date, day] of days) for (const m of day.matieres ?? []) {
+      const a = m.aFaire; if (!a) continue;
+      hw.push({ pourLe: date, matiere: m.matiere, donneLe: a.donneLe, effectue: a.effectue, interrogation: m.interrogation, contenu: a.contenu ? htmlToText(unb64(a.contenu)) : "" });
+    }
+    const periodes = (d.periodes ?? []).map((p) => ({ id: p.idPeriode, nom: p.periode, cloture: p.cloture,
+      moyenneGenerale: p.ensembleMatieres?.moyenneGeneral, moyenneClasse: p.ensembleMatieres?.moyenneClasse,
+      matieres: (p.ensembleMatieres?.disciplines ?? []).map((m) => ({ matiere: m.discipline, moyenneEleve: m.moyenne, moyenneClasse: m.moyenneClasse, coefficient: m.coef })) }));
+    const notes = (d.notes ?? [])
+      .map((n) => ({ date: n.date, matiere: n.libelleMatiere, devoir: n.devoir, note: num(n.valeur), sur: num(n.noteSur) ?? 20, coefficient: num(n.coef) ?? 1, moyenneClasse: num(n.moyenneClasse), periode: n.codePeriode, nonSignificatif: n.nonSignificatif }))
+      .filter((n) => n.note != null && !n.nonSignificatif).sort((a, b) => a.date.localeCompare(b.date));
+    const trim = [...periodes].filter((p) => /^A00\d$/.test(p.id) && p.matieres.some((m) => num(m.moyenneEleve) != null)).pop();
+    const officiel = {};
+    for (const m of trim?.matieres ?? []) if (num(m.moyenneEleve) != null && !/^pôle/i.test(m.matiere)) officiel[m.matiere] = { eleve: num(m.moyenneEleve), classe: num(m.moyenneClasse) };
+    const devoirs = hw.map((x) => ({ date: x.pourLe, matiere: x.matiere, titre: x.contenu, source: "ecoledirecte", controle: !!x.interrogation, rendu: !!x.effectue }));
+    LS.set("vs-data", { eleve: S.accountName, classe: S.classe || "", generatedAt: from, sources: { ecoledirecte: { ok: true } },
+      officielPeriode: { A001: "T1", A002: "T2", A003: "T3" }[trim?.id], officiel, notes, devoirs, periodesED: periodes, layout: LS.get("vs-layout") || undefined });
+    LS.set("vs-summary", summary(S.accountName, from, trim, notes, officiel, hw));
+    LS.set("vs-synced-at", Date.now());
+    return { notes: notes.length, devoirs: hw.length };
+  }
+
+  function summary(eleve, today, trim, notes, officiel, hw) {
+    const by = new Map();
+    for (const n of notes) (by.get(n.matiere) ?? by.set(n.matiere, []).get(n.matiere)).push(n);
+    const rows = [...by].map(([m, a]) => {
+      const o = officiel[m]; let s = 0, c = 0, sc = 0, cc = 0;
+      for (const n of a) { s += (n.note / n.sur) * 20 * n.coefficient; c += n.coefficient; if (n.moyenneClasse != null) { sc += (n.moyenneClasse / n.sur) * 20 * n.coefficient; cc += n.coefficient; } }
+      const avg = o?.eleve ?? s / c, cls = o?.classe ?? (cc ? sc / cc : null);
+      const last = a.slice(-3).reduce((t, n) => t + (n.note / n.sur) * 20, 0) / Math.min(3, a.length);
+      return { m, avg, cls, n: a.length, trend: a.length < 3 ? "peu de notes" : last > avg + 1 ? "↗" : last < avg - 1 ? "↘" : "→" };
+    }).sort((x, y) => x.avg - y.avg);
+    const gen = rows.length ? rows.reduce((t, r) => t + r.avg, 0) / rows.length : null;
+    const byDay = new Map();
+    for (const x of hw) (byDay.get(x.pourLe) ?? byDay.set(x.pourLe, []).get(x.pourLe)).push(x);
+    return [`# ${eleve} — synthèse du ${fr(today)}`, `Moyenne générale (moyenne des matières, ${trim?.nom ?? "période en cours"}) : ${f1(gen)}/20 · ${notes.length} notes`, ``,
+      `## Matières (de la plus faible à la plus forte)`, ...rows.map((r) => `- ${r.m} : ${f1(r.avg)}${r.cls != null ? ` (classe ${f1(r.cls)})` : ""} · ${r.n} notes · ${r.trend}`), ``,
+      `## Devoirs des ${DAYS} prochains jours`, ...[...byDay].flatMap(([d, a]) => [`${fr(d)}`, ...a.map((x) => `- ${x.interrogation ? "⚠ CONTRÔLE " : ""}${x.matiere}${x.effectue ? " ✔" : ""} : ${x.contenu.slice(0, 220)}`)]),
+      hw.length ? "" : "Aucun devoir."].join("\n");
+  }
+
+  // ── Fenêtre de connexion ──
+  let dlg;
+  const el = (h) => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
+  function openLogin(msg) {
+    return new Promise((resolve) => {
+      dlg?.remove();
+      dlg = el(`<dialog class="synth vs-login" aria-labelledby="vs-t"><h2 id="vs-t">Connexion Ecole Directe</h2><div id="vs-body"></div></dialog>`);
+      document.body.append(dlg);
+      const body = dlg.querySelector("#vs-body");
+      const err = (m) => { const e = body.querySelector(".vs-err"); e.textContent = m || ""; e.hidden = !m; };
+      const step1 = () => {
+        const c = creds() || {};
+        body.innerHTML = `<form class="vs-form">${msg ? `<p class="t-meta">${msg}</p>` : ""}
+          <label>Identifiant<input name="u" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+          <label>Mot de passe<input name="p" type="password" autocomplete="current-password" required></label>
+          <label class="vs-check"><input name="r" type="checkbox" checked> Rester connecté sur ce téléphone</label>
+          <p class="vs-err" role="alert" hidden></p>
+          <button class="act primary" type="submit">Se connecter</button>
+          <p class="t-meta">Vos identifiants restent sur ce téléphone. Ils passent par votre relais privé le temps de l'appel, sans y être enregistrés.</p></form>`;
+        const f = body.querySelector("form");
+        f.u.value = c.u || "";
+        f.addEventListener("submit", async (e) => {
+          e.preventDefault(); err("");
+          const btn = f.querySelector("button"); btn.disabled = true; btn.textContent = "Connexion…";
+          memCreds = { u: f.u.value.trim(), p: f.p.value };
+          LS.set("vs-creds", f.r.checked ? memCreds : null);
+          try { const r = await login(); r.status === "ok" ? done() : step2(r); }
+          catch (x) { err(x instanceof NeedLogin ? "Identifiants manquants." : x.message); btn.disabled = false; btn.textContent = "Se connecter"; }
+        });
+      };
+      const step2 = (q) => {
+        body.innerHTML = `<p>Ecole Directe pose une question de sécurité (une seule fois sur ce téléphone).</p><p><b></b></p><div class="vs-choices"></div><p class="vs-err" role="alert" hidden></p>`;
+        body.querySelector("b").textContent = q.question;
+        const box = body.querySelector(".vs-choices");
+        for (const ch of q.choices) {
+          const b = el(`<button class="act" type="button"></button>`); b.textContent = ch; box.append(b);
+          b.addEventListener("click", async () => {
+            box.querySelectorAll("button").forEach((x) => (x.disabled = true)); err("");
+            try { const r = await answer2fa(ch); r.status === "ok" ? done() : step2(r); }
+            catch (x) { err(x.message); box.querySelectorAll("button").forEach((y) => (y.disabled = false)); }
+          });
+        }
+      };
+      const done = async () => {
+        body.innerHTML = `<p role="status">Connecté. Récupération des notes et des devoirs…</p>`;
+        try { await sync(); dlg.close(); resolve(true); }
+        catch (x) { body.innerHTML = `<p class="vs-err" role="alert"></p><button class="act primary" type="button">Réessayer</button>`; body.querySelector(".vs-err").textContent = x.message; body.querySelector("button").onclick = done; }
+      };
+      dlg.addEventListener("cancel", (e) => { if (!LS.get("vs-data")) e.preventDefault(); else resolve(false); });
+      step1(); dlg.showModal();
+    });
+  }
+
+  async function runSync() {
+    try { await sync(); return { ok: true }; }
+    catch (x) {
+      if (!(x instanceof NeedLogin)) return { ok: false, error: x.message };
+      return (await openLogin("La session a expiré, reconnectez-vous.")) ? { ok: true } : { ok: false, error: "Connexion annulée." };
+    }
+  }
+
+  // ── Les routes /api/* du dashboard, traitées sur le téléphone ──
+  window.fetch = (input, init) => {
+    const u = typeof input === "string" ? input : input?.url ?? "";
+    if (!u.startsWith("/api/") || u.startsWith("/api/ed")) return origFetch(input, init);
+    const reply = (o) => new Response(JSON.stringify(o), { headers: { "Content-Type": "application/json" } });
+    if (u === "/api/ping") return Promise.resolve(reply({ ok: true }));
+    if (u === "/api/resume") return Promise.resolve(reply({ text: LS.get("vs-summary") || "" }));
+    if (u === "/api/layout") { try { LS.set("vs-layout", JSON.parse(init?.body || "[]")); } catch (e) {} return Promise.resolve(reply({ ok: true })); }
+    if (u === "/api/sync") return runSync().then(reply);
+    return Promise.resolve(reply({ error: "introuvable" }));
+  };
+
+  // ── Bouton Compte (remplace « Mobile ») et premier lancement ──
+  function account() {
+    const d = el(`<dialog class="synth" aria-labelledby="vs-a"><h2 id="vs-a">Compte</h2><div></div></dialog>`);
+    const at = LS.get("vs-synced-at");
+    d.querySelector("div").innerHTML = `<p></p><p class="t-meta">${at ? "Dernière mise à jour : " + new Date(at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : ""}</p>
+      <p class="t-meta">${LS.get("vs-creds") ? "Identifiants mémorisés sur ce téléphone." : "Identifiants non mémorisés : il faudra les ressaisir quand la session expire."}</p>
+      <div class="vs-choices"><button class="act" type="button" data-a="out">Se déconnecter et effacer les données</button><button class="act primary" type="button" data-a="close">Fermer</button></div>`;
+    d.querySelector("p").textContent = S.accountName ? `Connecté : ${S.accountName}` : "Non connecté";
+    d.addEventListener("click", (e) => {
+      const a = e.target.closest("button")?.dataset.a;
+      if (a === "close") d.close();
+      if (a === "out" && confirm("Effacer la session, les identifiants et les notes de ce téléphone ?")) {
+        ["vs-session", "vs-creds", "vs-data", "vs-summary", "vs-synced-at", "vs-layout"].forEach((k) => LS.set(k, null));
+        location.reload();
+      }
+    });
+    d.addEventListener("close", () => d.remove());
+    document.body.append(d); d.showModal();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const m = document.getElementById("act-mobile");
+    if (m) {
+      const b = m.cloneNode(true); // retire le comportement « QR code du PC »
+      b.querySelector("span").textContent = "Compte";
+      b.querySelector("svg").innerHTML = '<circle cx="10" cy="7" r="3.5"/><path d="M3.5 17a6.5 6.5 0 0 1 13 0"/>';
+      b.addEventListener("click", account);
+      m.replaceWith(b);
+    }
+    if (!LS.get("vs-key")) {
+      const t = document.getElementById("toast");
+      if (t) { t.textContent = "Ouvrez une fois le lien d'installation complet (avec la clé ?k=…)."; t.hidden = false; }
+      return;
+    }
+    if (!LS.get("vs-data")) { openLogin().then((ok) => ok && location.reload()); return; }
+    // Mise à jour automatique à l'ouverture si les données ont plus de 3 h et que les identifiants sont mémorisés
+    if (LS.get("vs-creds") && Date.now() - (LS.get("vs-synced-at") || 0) > STALE_MS && navigator.onLine) {
+      const t = document.getElementById("toast");
+      if (t) { t.textContent = "Mise à jour des notes…"; t.hidden = false; }
+      sync().then(() => location.reload(), () => { if (t) { t.textContent = "Mise à jour impossible : touchez Actualiser."; setTimeout(() => (t.hidden = true), 6000); } });
+    }
+  });
+
+  if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+})();
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const RAW = (window.VS_DATA || null);
+
+// Paramètres d'aperçu (facultatifs) : ?theme=dark|light  ?periode=T2  ?apercu=chargement|vide|erreur
+const Q = new URLSearchParams(location.search);
+const APERCU = Q.get("apercu");
+const DATA = APERCU === "vide" ? null
+  : RAW && APERCU === "erreur" ? { ...RAW, sources: { ...(RAW.sources || {}), classroom: { ok: false } } }
+  : RAW;
+const root = document.documentElement;
+{ const z = parseFloat(Q.get("echelle")); if (z >= .5 && z <= 1.5) root.style.setProperty("--zoom", z); }
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = (s) => document.querySelector(s);
+
+const toNum = (v) => v == null || v === "" ? NaN : parseFloat(String(v).replace(",", "."));
+const fmt = (x) => x == null || isNaN(x) ? "—" : x.toFixed(1).replace(".", ",");
+const fmtRaw = (x) => String(Math.round(x * 100) / 100).replace(".", ",");
+const fmtD = (x) => (x > 0.05 ? "+" : x < -0.05 ? "−" : "") + fmt(Math.abs(x));
+const pts = (x) => `${fmt(Math.abs(x))} ${Math.abs(x) >= 2 ? "points" : "point"}`;
+const pl = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+const D = (s) => new Date(s + "T12:00:00");
+const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const addDays = (s, n) => { const d = D(s); d.setDate(d.getDate() + n); return iso(d); };
+const first = (s, str) => D(s).getDate() === 1 ? str.replace(/(^|\s)1 /, "$11er ") : str;
+const dShort = (s) => D(s).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
+const dDay = (s) => D(s).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+const dLong = (s) => first(s, D(s).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }));
+const dFull = (s) => first(s, D(s).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }));
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const dayN = (s) => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5;
+const fromDay = (n) => new Date(n * 864e5).toISOString().slice(0, 10);
+
+const ICON = {
+  up: '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 10.5l7-7M5 3.5h5.5V9"/></svg>',
+  down: '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 3.5l7 7M10.5 5v5.5H5"/></svg>',
+  flat: '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 7h10M8.5 3.5L12 7l-3.5 3.5"/></svg>',
+  few: '<svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 6.5V10M7 4.25v.01"/></svg>',
+  exam: '<svg viewBox="0 0 14 14" aria-hidden="true"><path class="fill" d="M7 1l6 6-6 6-6-6z"/></svg>',
+  late: '<svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3.25l2.25 1.5"/></svg>',
+  done: '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7"/></svg>',
+  warn: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5L18 17H2z"/><path d="M10 8v4M10 14.5v.01"/></svg>',
+  back: '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 2.5L4 7l4.5 4.5"/></svg>',
+  next: '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 7h10M8.5 3.5L12 7l-3.5 3.5"/></svg>',
+};
+const STATUS = {
+  up: { l: "En progrès", c: "b-up" }, flat: { l: "Stable", c: "b-flat" },
+  down: { l: "En baisse", c: "b-down" }, few: { l: "Peu de notes", c: "b-few" },
+};
+const badge = (t) => `<span class="badge ${STATUS[t].c}">${ICON[t]}${STATUS[t].l}</span>`;
+const SRC = { ecoledirecte: "Ecole Directe", classroom: "Classroom" };
+
+// ── Données ──
+const NOTES = (DATA?.notes ?? [])
+  .filter((n) => !n.nonSignificatif && !isNaN(toNum(n.note)) && n.date)
+  .map((n) => {
+    const sur = toNum(n.sur) || 20, v = toNum(n.note), c = toNum(n.moyenneClasse);
+    return { date: n.date, matiere: n.matiere || "Autre", devoir: n.devoir || "Évaluation", note: v, sur,
+      n20: v / sur * 20, cls20: isNaN(c) ? null : c / sur * 20, coef: toNum(n.coefficient) || 1 };
+  })
+  .sort((a, b) => a.date.localeCompare(b.date));
+const HW = (DATA?.devoirs ?? [])
+  .filter((h) => h.date)
+  .map((h) => ({ date: h.date, matiere: h.matiere || "Autre", titre: String(h.titre ?? "").trim() || "Consigne non renseignée",
+    source: h.source, controle: !!h.controle, rendu: !!h.rendu }))
+  .sort((a, b) => a.date.localeCompare(b.date) || a.matiere.localeCompare(b.matiere, "fr"));
+const TODAY = DATA?.generatedAt || iso(new Date());
+
+// Couleur et forme stables par matière (la même partout)
+const KNOWN = [/math/, /fran/, /hist|geo/, /angl/, /svt|vie et de la terre/, /phys|chim/, /eps|sport/];
+const norm = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const SUBJ = new Map();
+(() => {
+  const names = [...new Set([...NOTES.map((n) => n.matiere), ...HW.map((h) => h.matiere)])].sort((a, b) => a.localeCompare(b, "fr"));
+  const used = new Set(), rest = [];
+  for (const n of names) { const i = KNOWN.findIndex((r) => r.test(norm(n))); if (i >= 0 && !used.has(i)) { used.add(i); SUBJ.set(n, i); } else rest.push(n); }
+  let over = 7;
+  for (const n of rest) { let k = 0; while (k < 7 && used.has(k)) k++; if (k < 7) { used.add(k); SUBJ.set(n, k); } else SUBJ.set(n, over++); }
+})();
+const sIdx = (name) => SUBJ.get(name) ?? 0;
+const dot = (name, extra = "") => `<i class="dot sh-${sIdx(name) % 7} ${extra}" style="--c:var(--subject-${sIdx(name) % 7 + 1})" aria-hidden="true"></i>`;
+const PSTYLE = [["circle", 0], ["rect", 0], ["triangle", 0], ["rectRot", 0], ["triangle", 180], ["crossRot", 0], ["cross", 0]];
+
+// Périodes : data.periodes si fourni, sinon trimestres scolaires
+const PERIODS = (() => {
+  let list;
+  if (Array.isArray(DATA?.periodes) && DATA.periodes.length) {
+    list = DATA.periodes.map((p, i) => ({ id: p.id || `P${i + 1}`, nom: p.nom, court: p.court || p.nom, debut: p.debut, fin: p.fin }));
+  } else {
+    const y = +TODAY.slice(0, 4) - (+TODAY.slice(5, 7) < 8 ? 1 : 0);
+    const feb = new Date(y + 1, 2, 0).getDate();
+    list = [
+      { id: "T1", nom: "Trimestre 1", court: "Trim. 1", debut: `${y}-08-15`, fin: `${y}-11-30` },
+      { id: "T2", nom: "Trimestre 2", court: "Trim. 2", debut: `${y}-12-01`, fin: `${y + 1}-02-${feb}` },
+      { id: "T3", nom: "Trimestre 3", court: "Trim. 3", debut: `${y + 1}-03-01`, fin: `${y + 1}-07-31` },
+    ];
+  }
+  list.push({ id: "A", nom: "Année", court: "Année", debut: list[0].debut, fin: list[list.length - 1].fin, annee: true });
+  return list;
+})();
+const CURRENT = PERIODS.find((p) => !p.annee && TODAY >= p.debut && TODAY <= p.fin) || [...PERIODS].reverse().find((p) => !p.annee && p.debut <= TODAY) || PERIODS[0];
+const state = { p: PERIODS.find((p) => p.id === Q.get("periode")) || CURRENT, f: "all", hidden: new Set() };
+
+const wavg = (arr, k) => { let s = 0, c = 0; for (const x of arr) if (x[k] != null) { s += x[k] * x.coef; c += x.coef; } return c ? s / c : null; };
+
+function stats(p) {
+  const notes = NOTES.filter((n) => n.date >= p.debut && n.date <= p.fin);
+  const by = new Map();
+  for (const n of notes) { if (!by.has(n.matiere)) by.set(n.matiere, []); by.get(n.matiere).push(n); }
+  const subjects = [...by].map(([name, arr]) => {
+    // Moyennes officielles Ecole Directe pour la période qu'elles concernent (DATA.officielPeriode)
+    const off = p.id === DATA?.officielPeriode ? DATA?.officiel?.[name] : null;
+    const avg = off?.eleve ?? wavg(arr, "n20"), cls = off?.classe ?? wavg(arr, "cls20");
+    let trend = "few", delta = null;
+    if (arr.length >= 3) {
+      const last = arr.slice(-3), prev = arr.slice(0, -3);
+      delta = wavg(last, "n20") - (prev.length ? wavg(prev, "n20") : arr[0].n20);
+      trend = delta > 0.75 ? "up" : delta < -0.75 ? "down" : "flat";
+    }
+    const cumul = arr.map((n, i) => ({ n, y: wavg(arr.slice(0, i + 1), "n20"), c: wavg(arr.slice(0, i + 1), "cls20") }));
+    return { name, arr, avg, cls, trend, delta, cumul, few: arr.length < 3,
+      min: Math.min(...arr.map((x) => x.n20)), max: Math.max(...arr.map((x) => x.n20)) };
+  }).sort((a, b) => sIdx(a.name) - sIdx(b.name) || a.name.localeCompare(b.name, "fr"));
+
+  const mean = (xs) => xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null;
+  const general = mean(subjects.map((s) => s.avg));
+  const generalCls = mean(subjects.filter((s) => s.cls != null).map((s) => s.cls));
+  const genAt = (d) => mean(subjects.map((s) => wavg(s.arr.filter((n) => n.date <= d), "n20")).filter((x) => x != null));
+  const ref = addDays(TODAY < p.fin ? TODAY : p.fin, -14);
+  const gDelta = notes.some((n) => n.date <= ref) && notes.some((n) => n.date > ref) ? general - genAt(ref) : null;
+
+  const solid = subjects.filter((s) => !s.few);
+  const best = [...(solid.length ? solid : subjects)].sort((a, b) => b.avg - a.avg)[0];
+  const downs = subjects.filter((s) => s.trend === "down").sort((a, b) => a.delta - b.delta);
+  const below = solid.filter((s) => s.cls != null && s.avg < s.cls).sort((a, b) => (a.avg - a.cls) - (b.avg - b.cls));
+  let watch = downs[0] || below[0] || null;
+  if (watch && best && watch.name === best.name) watch = null;
+  const withCls = subjects.filter((s) => s.cls != null);
+  const above = withCls.filter((s) => s.avg >= s.cls).length;
+  return { notes, subjects, general, generalCls, gDelta, ref, best, watch, above, withCls: withCls.length };
+}
+
+function hwGroups(list) {
+  const t1 = addDays(TODAY, 1), t7 = addDays(TODAY, 7);
+  const g = { late: [], today: [], tomorrow: [], week: [], later: [] };
+  for (const h of list) {
+    if (h.date < TODAY) { if (!h.rendu) g.late.push(h); }
+    else if (h.date === TODAY) g.today.push(h);
+    else if (h.date === t1) g.tomorrow.push(h);
+    else if (h.date <= t7) g.week.push(h);
+    else g.later.push(h);
+  }
+  return g;
+}
+const GROUPS = [["late", "En retard"], ["today", "Aujourd'hui"], ["tomorrow", "Demain"], ["week", "Cette semaine"], ["later", "Plus tard"]];
+
+function weekNumbers() {
+  const t7 = addDays(TODAY, 7);
+  const soon = HW.filter((h) => !h.rendu && h.date >= TODAY && h.date <= t7);
+  const exams = soon.filter((h) => h.controle).length;
+  const late = HW.filter((h) => !h.rendu && h.date < TODAY).length;
+  const nextExam = HW.find((h) => h.controle && !h.rendu && h.date >= TODAY);
+  return { soon: soon.length, exams, late, nextExam, urgent: late + HW.filter((h) => !h.rendu && (h.date === TODAY || h.date === addDays(TODAY, 1))).length };
+}
+
+// ── Composants ──
+const hwRow = (h, grp) => `<li class="hw${h.rendu ? " is-done" : ""}" style="--c:var(--subject-${sIdx(h.matiere) % 7 + 1})">${dot(h.matiere)}
+  <div><p class="hw-s">${esc(h.matiere)} <span class="hw-src">· ${SRC[h.source] || "Autre source"}</span></p>
+  <p class="hw-t">${esc(h.titre)}</p>
+  <p class="hw-d${grp === "late" ? " is-late" : ""}">${grp === "late" ? "Prévu le " + dDay(h.date) : dDay(h.date)}</p></div>
+  <div class="hw-x">${h.controle ? `<span class="badge b-exam">${ICON.exam}Contrôle</span>` : ""}${h.rendu ? `<span class="badge b-done">${ICON.done}Rendu</span>` : ""}</div></li>`;
+
+const meter = (s) => `<div class="meter" role="img" aria-label="${fmt(s.avg)} sur 20${s.cls != null ? `, moyenne de classe ${fmt(s.cls)}` : ""}" style="--c:var(--subject-${sIdx(s.name) % 7 + 1})">
+  <span class="meter-fill" style="width:${Math.min(100, s.avg / 20 * 100)}%"></span>${s.cls != null ? `<span class="meter-mark" style="left:${s.cls / 20 * 100}%"></span>` : ""}</div>`;
+
+const periodSeg = () => `<div class="seg" role="group" aria-label="Période">${PERIODS.map((p) =>
+  `<button type="button" data-period="${esc(p.id)}" aria-pressed="${p.id === state.p.id}">${p.annee ? esc(p.nom) : `<span class="long">${esc(p.nom)}</span><span class="short" aria-hidden="true">${esc(p.court)}</span>`}</button>`).join("")}</div>`;
+
+function notices() {
+  const src = DATA?.sources || {}, names = { ecoledirecte: "Ecole Directe", classroom: "Google Classroom" };
+  return Object.entries(src).filter(([, s]) => s && s.ok === false).map(([k]) => `<div class="notice" role="status">${ICON.warn}<div>
+    <p class="notice-t">${esc(names[k] || k)} n'a pas répondu lors de la mise à jour</p>
+    <p>${k === "classroom" ? "Les devoirs Classroom affichés peuvent dater de la mise à jour précédente." : "Les notes et le cahier de textes peuvent dater de la mise à jour précédente."} Les autres informations sont à jour.</p></div></div>`).join("");
+}
+
+function notesTable(list, withSubj) {
+  const head = `<tr><th scope="col">Date</th>${withSubj ? '<th scope="col">Matière</th>' : ""}<th scope="col">Évaluation</th><th scope="col" class="r">Note</th><th scope="col" class="r">Sur 20</th><th scope="col" class="r">Coef.</th><th scope="col" class="r">Classe</th></tr>`;
+  const rows = list.map((n) => `<tr><td class="num">${dShort(n.date)}</td>${withSubj ? `<td><span class="cell-s">${dot(n.matiere)}${esc(n.matiere)}</span></td>` : ""}<td>${esc(n.devoir)}</td>
+    <td class="r num">${fmtRaw(n.note)}/${fmtRaw(n.sur)}</td><td class="r num strong">${fmt(n.n20)}</td><td class="r num">${fmtRaw(n.coef)}</td><td class="r num">${fmt(n.cls20)}</td></tr>`).join("");
+  const items = list.map((n) => `<li><div>${withSubj ? `<p class="nl-s">${dot(n.matiere)}${esc(n.matiere)}</p>` : ""}<p>${esc(n.devoir)}</p>
+    <p class="t-meta"><span class="num">${dShort(n.date)}</span> · <span class="num">${fmtRaw(n.note)}/${fmtRaw(n.sur)}</span> · coef. <span class="num">${fmtRaw(n.coef)}</span> · classe <span class="num">${fmt(n.cls20)}</span></p></div>
+    <p class="nl-v">${fmt(n.n20)}<small>/20</small></p></li>`).join("");
+  return `<div class="tbl-wrap"><table class="tbl only-wide"><thead>${head}</thead><tbody>${rows}</tbody></table></div><ul class="nl only-narrow">${items}</ul>`;
+}
+
+// ── Accueil : salutation, anneau, compteurs ──
+function hello() {
+  const hr = new Date().getHours(), hi = hr >= 5 && hr < 18 ? "Bonjour" : "Bonsoir";
+  return `<div class="hello rise"><div class="page-h"><h1 tabindex="-1">${hi} ${esc(DATA?.eleve || "")}</h1><p class="lede">Voici le point du ${dLong(TODAY)}.</p></div>${periodSeg()}</div>`;
+}
+const ring = (v) => { const L = 326.73, off = (L * (1 - Math.max(0, Math.min(20, v)) / 20)).toFixed(2);
+  return `<div class="ring-w" role="img" aria-label="Moyenne générale : ${fmt(v)} sur 20"><svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-t" cx="60" cy="60" r="52"/><circle class="ring-v" cx="60" cy="60" r="52" stroke-dasharray="${L}" stroke-dashoffset="${off}" style="--len:${L}" transform="rotate(-90 60 60)"/></svg>
+  <p class="ring-n" aria-hidden="true"><span class="hero-big" data-count="${v}">${fmt(v)}</span><span class="hero-unit">sur 20</span></p></div>`; };
+function countUp() {
+  if (RM) return;
+  document.querySelectorAll("[data-count]").forEach((el, i) => {
+    const to = +el.dataset.count; if (isNaN(to)) return;
+    const t0 = performance.now() + 150 + i * 40, d = 1000;
+    const step = (t) => { const k = Math.max(0, Math.min(1, (t - t0) / d)); el.textContent = fmt(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
+
+function newNotesCard() {
+  // Semaine en cours : du lundi au dimanche contenant TODAY
+  const wd = (D(TODAY).getDay() + 6) % 7, mon = addDays(TODAY, -wd), sun = addDays(mon, 6);
+  const list = NOTES.filter((n) => n.date >= mon && n.date <= sun).sort((a, b) => b.date.localeCompare(a.date));
+  const mean = list.length ? list.reduce((t, n) => t + n.n20, 0) / list.length : null;
+  const withC = list.filter((n) => n.cls20 != null), above = withC.filter((n) => n.n20 >= n.cls20).length;
+  const range = `du ${dLong(mon)} au ${dLong(sun)}`;
+  const items = list.map((n) => {
+    const d = n.cls20 == null ? null : n.n20 - n.cls20, k = d == null ? "" : d >= 0.5 ? "up" : d <= -0.5 ? "down" : "flat";
+    return `<li><a class="wk-it" style="--c:var(--subject-${sIdx(n.matiere) % 7 + 1})" href="#matiere/${encodeURIComponent(n.matiere)}">
+      <p class="wk-s">${dot(n.matiere)}${esc(n.matiere)}</p>
+      <p class="wk-d" title="${esc(n.devoir)}">${esc(n.devoir)}</p>
+      <p class="t-meta"><span class="num">${esc(dDay(n.date))}</span> · <span class="num">${fmtRaw(n.note)}/${fmtRaw(n.sur)}</span> · coef. <span class="num">${fmtRaw(n.coef)}</span></p>
+      <div class="wk-v"><p class="wk-n">${fmt(n.n20)}<small>/20</small></p>${d == null ? "" : `<span class="wk-cmp ${k}">${k === "flat" ? "≈ classe" : `${fmtD(d)} vs classe`}</span>`}</div></a></li>`;
+  }).join("");
+  return `<section class="card wk-new l-6 rise" style="--i:1" aria-labelledby="h-new">
+    <div class="card-h"><h2 id="h-new">Nouvelles notes de la semaine</h2><p class="t-meta">Semaine ${range}</p></div>
+    ${list.length ? `<dl class="facts wk-sum"><div><dt>Notes</dt><dd>${list.length}</dd></div><div><dt>Moyenne</dt><dd>${fmt(mean)}</dd></div>${withC.length ? `<div><dt>≥ classe</dt><dd>${above}/${withC.length}</dd></div>` : ""}</dl>
+    <ul class="wk-list">${items}</ul>` : `<p class="empty-w">Pas encore de nouvelle note cette semaine.</p>`}
+  </section>`;
+}
+
+// ── Vues ──
+let cur = null;
+
+function vAccueil() {
+  if (!NOTES.length && !HW.length) return `<div class="page-h"><h1 tabindex="-1">Bienvenue</h1></div>` + notices() + `<section class="card empty rise">
+    <p class="t-label">Premier lancement</p><h2>Le carnet est encore vide</h2>
+    <p>Les notes, les moyennes et les devoirs apparaîtront ici après la première mise à jour depuis Ecole Directe et Google Classroom.</p>
+    <p class="empty-hint">Pour le remplir, demandez à l'assistant : « Fais-moi le dashboard des notes du trimestre. »</p></section>`;
+  const s = cur, p = state.p;
+  let h = hello() + notices();
+  if (!s.subjects.length) return h + `<div class="grid">${emptyPeriod()}${weekCard()}</div>`;
+
+  const dl = s.gDelta == null ? "" : (() => {
+    const k = s.gDelta >= 0.2 ? "up" : s.gDelta <= -0.2 ? "down" : "flat";
+    const since = ` depuis le ${dShort(s.ref).replace(/^0/, "")}`;
+    return `<p class="delta ${k}">${ICON[k]}${k === "flat" ? "Stable" + since : `${fmtD(s.gDelta)} ${Math.abs(s.gDelta) >= 2 ? "points" : "point"}${since}`}</p>`;
+  })();
+  const ups = s.subjects.filter((x) => x.trend === "up");
+  const bravo = s.withCls && s.above * 2 >= s.withCls ? "Bravo ! " : "";
+  const sum = !s.withCls ? "" : s.above === s.withCls ? "Au-dessus de la moyenne de classe dans toutes les matières."
+    : s.above === 0 ? "En dessous de la moyenne de classe pour l'instant. Les cartes matières aident à cibler les efforts."
+    : `Au-dessus de la moyenne de classe dans ${s.above} ${s.above > 1 ? "matières" : "matière"} sur ${s.withCls}.`;
+
+  const best = s.best, w = s.watch;
+  const kBest = best ? `<a class="card kpi tint m-6 l-3 rise" style="--i:1;--c:var(--subject-${sIdx(best.name) % 7 + 1})" href="#matiere/${encodeURIComponent(best.name)}">
+    <p class="t-label">Point fort</p><p class="kpi-subj">${dot(best.name)}${esc(best.name)}</p>
+    <p class="kpi-v"><span data-count="${best.avg}">${fmt(best.avg)}</span><small>/20</small></p>
+    <p class="t-meta">${best.cls != null ? `Classe <span class="num">${fmt(best.cls)}</span>` : `${pl(best.arr.length, "note", "notes")}`}</p></a>` : "";
+  const kWatch = w ? `<a class="card kpi tint m-6 l-3 rise" style="--i:2;--c:var(--subject-${sIdx(w.name) % 7 + 1})" href="#matiere/${encodeURIComponent(w.name)}">
+    <p class="t-label">À surveiller</p><p class="kpi-subj">${dot(w.name)}${esc(w.name)}</p>
+    <p class="kpi-v"><span data-count="${w.avg}">${fmt(w.avg)}</span><small>/20</small></p>
+    <p class="t-meta">${w.trend === "down" ? `3 dernières notes : <span class="num">${fmtD(w.delta)}</span>` : `Classe <span class="num">${fmt(w.cls)}</span>`}</p></a>`
+    : `<div class="card kpi m-6 l-3 rise" style="--i:2"><p class="t-label">À surveiller</p><p class="kpi-subj">Rien à signaler</p><p class="t-meta">Aucune matière en baisse ni sous la moyenne de classe.</p></div>`;
+
+  return h + `<div class="grid">
+    <section class="card hero hero-ring l-6 rise" style="--i:0" aria-labelledby="h-avg">
+      <div class="hero-main">
+        <p class="t-label" id="h-avg">Moyenne générale · ${esc(p.nom)}</p>
+        ${dl}
+        ${sum ? `<p class="hero-sum">${bravo}${sum}</p>` : ""}
+        ${ups.length ? `<div class="wins" role="list" aria-label="Matières en progrès">${ups.map((x) => `<span class="win" role="listitem" style="--c:var(--subject-${sIdx(x.name) % 7 + 1})">${ICON.up}${esc(x.name)}</span>`).join("")}</div>` : ""}
+        <dl class="facts"><div><dt>Classe</dt><dd>${fmt(s.generalCls)}</dd></div><div><dt>Notes</dt><dd>${s.notes.length}</dd></div><div><dt>Matières</dt><dd>${s.subjects.length}</dd></div></dl>
+      </div>
+      ${ring(s.general)}
+    </section>
+    ${newNotesCard()}
+    ${kBest}${kWatch}
+    <section class="card l-7 rise" style="--i:4" aria-labelledby="h-trend">
+      <div class="card-h"><h2 id="h-trend">Évolution des moyennes</h2><p class="t-meta">Moyenne cumulée par matière, sur 20. Touchez un point pour le détail.</p></div>
+      <div class="legend" role="group" aria-label="Afficher ou masquer une matière">${s.subjects.map((x) => `<button type="button" class="chip" style="--c:var(--subject-${sIdx(x.name) % 7 + 1})" data-toggle="${esc(x.name)}" aria-pressed="${!state.hidden.has(x.name)}">${dot(x.name)}${esc(x.name)}</button>`).join("")}</div>
+      <div class="chart"><canvas id="c-trend" role="img" aria-label="Courbes de la moyenne cumulée pour ${pl(s.subjects.length, "matière", "matières")}, détail dans le tableau qui suit."></canvas><div class="tip" id="t-trend" hidden></div></div>
+      <details class="data"><summary>Voir les données en tableau</summary>
+        <table class="tbl"><thead><tr><th scope="col">Matière</th><th scope="col" class="r">Début</th><th scope="col" class="r">Actuelle</th><th scope="col" class="r">Écart</th></tr></thead><tbody>
+        ${s.subjects.map((x) => `<tr><td>${esc(x.name)}</td><td class="r num">${fmt(x.cumul[0].y)}</td><td class="r num">${fmt(x.avg)}</td><td class="r num">${fmtD(x.avg - x.cumul[0].y)}</td></tr>`).join("")}</tbody></table></details>
+    </section>
+    <section class="rise" style="--i:5" aria-labelledby="h-subj">
+      <div class="sec-h"><h2 id="h-subj">Par matière</h2><p class="t-meta mark-key"><i aria-hidden="true"></i>Trait : moyenne de la classe</p></div>
+      <div class="subjects">${s.subjects.map(subjCard).join("")}</div>
+    </section>
+    <section class="card l-5 rise" style="--i:6" aria-labelledby="h-cls">
+      <div class="card-h"><h2 id="h-cls">Élève et classe</h2><p class="t-meta">Barre : moyenne de ${esc(DATA?.eleve || "l'élève")} · trait : moyenne de la classe</p></div>
+      <div class="chart" style="height:${s.subjects.length * 44 + 40}px"><canvas id="c-class" role="img" aria-label="Barres horizontales comparant la moyenne de l'élève et celle de la classe, détail dans le tableau qui suit."></canvas><div class="tip" id="t-class" hidden></div></div>
+      <details class="data"><summary>Voir les données en tableau</summary>
+        <table class="tbl"><thead><tr><th scope="col">Matière</th><th scope="col" class="r">Élève</th><th scope="col" class="r">Classe</th><th scope="col" class="r">Écart</th></tr></thead><tbody>
+        ${s.subjects.map((x) => `<tr><td>${esc(x.name)}</td><td class="r num">${fmt(x.avg)}</td><td class="r num">${fmt(x.cls)}</td><td class="r num">${x.cls != null ? fmtD(x.avg - x.cls) : "—"}</td></tr>`).join("")}</tbody></table></details>
+    </section>
+  </div>`;
+}
+
+const subjCard = (s) => `<a class="card subj tint${s.few ? " is-few" : ""}" style="--c:var(--subject-${sIdx(s.name) % 7 + 1})" href="#matiere/${encodeURIComponent(s.name)}">
+  <div class="subj-h"><span class="subj-n">${dot(s.name)}${esc(s.name)}</span>${badge(s.trend)}</div>
+  <p class="subj-v"><span data-count="${s.avg}">${fmt(s.avg)}</span><small>/20</small></p>
+  ${meter(s)}
+  <p class="t-meta">${s.cls != null ? `Classe <span class="num">${fmt(s.cls)}</span> · ` : ""}${pl(s.arr.length, "note", "notes")} · <span class="num">${fmt(s.min)}–${fmt(s.max)}</span></p></a>`;
+
+function emptyPeriod() {
+  const p = state.p, future = p.debut > TODAY;
+  return `<section class="card empty l-7 rise"><p class="t-label">${esc(p.nom)}</p><h2>Pas encore de notes sur cette période</h2>
+    <p>${future ? `La période commence le ${dLong(p.debut)}. Les notes s'afficheront ici dès les premières évaluations.` : "Aucune note n'a été saisie sur cette période."}</p>
+    ${p.id !== CURRENT.id ? `<button type="button" class="btn" data-period="${esc(CURRENT.id)}">Revenir au ${esc(CURRENT.nom.toLowerCase())}</button>` : ""}</section>`;
+}
+
+function weekCard() {
+  const g = hwGroups(HW), wk = weekNumbers();
+  const shown = GROUPS.filter(([k]) => k !== "later" && g[k].length);
+  const body = !HW.length ? `<p class="t-meta">Aucun devoir dans le cahier de textes ni sur Classroom.</p>`
+    : !shown.length ? `<p>Rien à rendre dans les 7 prochains jours.</p>`
+    : shown.map(([k, l]) => `<h3 class="g-h${k === "late" ? " late" : ""}">${k === "late" ? ICON.late : ""}${l}</h3><ul class="hw-list">${g[k].map((h) => hwRow(h, k)).join("")}</ul>`).join("");
+  return `<section class="card l-5 rise" style="--i:3" aria-labelledby="h-week">
+    <div class="card-h"><h2 id="h-week">Cette semaine</h2><a class="link" href="#devoirs">Tous les devoirs${ICON.next}</a>
+    ${HW.length ? `<p class="t-meta">${pl(wk.soon, "devoir", "devoirs")} à faire d'ici le ${dLong(addDays(TODAY, 7))}${wk.exams ? `, dont ${pl(wk.exams, "contrôle", "contrôles")}` : ""}.</p>` : ""}</div>
+    ${notices()}${body}</section>`;
+}
+
+function vDevoirs() {
+  const wk = weekNumbers();
+  const lede = [`${pl(wk.soon, "devoir", "devoirs")} à faire dans les 7 prochains jours${wk.exams ? `, dont ${pl(wk.exams, "contrôle", "contrôles")}` : ""}.`,
+    wk.late ? `${pl(wk.late, "devoir", "devoirs")} en retard.` : "",
+    wk.nextExam ? `Prochain contrôle : ${esc(wk.nextExam.matiere)}, ${dLong(wk.nextExam.date)}.` : ""].filter(Boolean).join(" ");
+  let h = `<div class="page-h"><h1 tabindex="-1">Devoirs</h1>${HW.length ? `<p class="lede">${lede}</p>` : ""}</div>${notices()}`;
+  if (!HW.length) return h + `<section class="card empty rise"><h2>Rien à faire pour le moment</h2><p>Aucun devoir n'est prévu dans le cahier de textes Ecole Directe ni sur Google Classroom.</p></section>`;
+  const list = HW.filter((x) => state.f === "all" || x.controle), g = hwGroups(list);
+  const t7 = addDays(TODAY, 7);
+  const sub = { late: "Non rendus à ce jour", today: dLong(TODAY), tomorrow: dLong(addDays(TODAY, 1)), week: `Jusqu'au ${dLong(t7)}`, later: `Après le ${dLong(t7)}` };
+  const groups = GROUPS.filter(([k]) => g[k].length).map(([k, l], i) => `<section class="card hw-g rise" style="--i:${i + 1}" aria-labelledby="g-${k}">
+    <h2 id="g-${k}" class="g-title${k === "late" ? " late" : ""}">${k === "late" ? ICON.late : ""}${l}<span class="g-n">${g[k].length}</span></h2>
+    <p class="t-meta">${sub[k]}</p><ul class="hw-list">${g[k].map((x) => hwRow(x, k)).join("")}</ul></section>`).join("")
+    || `<section class="card empty"><p>Aucun contrôle prévu pour le moment.</p></section>`;
+  const days = Array.from({ length: 7 }, (_, i) => addDays(TODAY, i + 1)).map((d) => {
+    const l = HW.filter((x) => x.date === d && !x.rendu), ex = l.filter((x) => x.controle).length;
+    return `<li class="day${l.length ? "" : " is-empty"}" aria-label="${dLong(d)} : ${l.length ? pl(l.length, "devoir", "devoirs") + (ex ? `, dont ${pl(ex, "contrôle", "contrôles")}` : "") : "rien de prévu"}">
+      <span class="day-w" aria-hidden="true">${D(d).toLocaleDateString("fr-FR", { weekday: "short" })}</span><span class="day-n" aria-hidden="true">${D(d).getDate()}</span>
+      <span class="pips" aria-hidden="true">${l.slice(0, 4).map((x) => `<i class="pip${x.controle ? " ex" : ""}"></i>`).join("")}</span></li>`;
+  }).join("");
+  const src = DATA?.sources;
+  const srcCard = src ? `<section class="card srcs" aria-labelledby="h-src"><h2 id="h-src" class="t-h3">Sources</h2><ul class="src-list">${["ecoledirecte", "classroom"].filter((k) => src[k]).map((k) =>
+    `<li><span>${k === "classroom" ? "Google Classroom" : "Ecole Directe"}</span>${src[k].ok === false ? `<span class="badge b-down">${ICON.few}Pas de réponse</span>` : `<span class="badge b-done">${ICON.done}À jour</span>`}</li>`).join("")}</ul></section>` : "";
+  return h + `<div class="hw-layout">
+    <section class="card strip rise" aria-labelledby="h-days"><h2 id="h-days" class="t-h3">Les 7 prochains jours</h2><ol class="days">${days}</ol>
+      <p class="t-meta">Point : un devoir · losange : un contrôle</p></section>
+    <div class="hw-main"><div class="seg" role="group" aria-label="Filtrer les devoirs">
+      <button type="button" data-filter="all" aria-pressed="${state.f === "all"}">Tout</button><button type="button" data-filter="exam" aria-pressed="${state.f === "exam"}">Contrôles</button></div>${groups}</div>
+    ${srcCard}</div>`;
+}
+
+function vMatiere(name) {
+  const sub = cur.subjects.find((s) => s.name === name);
+  const head = `<a class="back" href="#">${ICON.back}Accueil</a><div class="page-h"><h1 tabindex="-1" class="h-subj">${dot(name, "dot-lg")}${esc(name)}</h1></div>${periodSeg()}`;
+  if (!sub) return head + `<section class="card empty"><h2>Pas de note sur cette période</h2><p>Aucune note en ${esc(name)} pour ${esc(state.p.nom.toLowerCase())}.</p></section>`;
+  const gap = sub.cls != null ? sub.avg - sub.cls : null;
+  const trendTxt = { up: `En progrès : les 3 dernières notes dépassent les précédentes de ${pts(sub.delta ?? 0)}.`,
+    down: `À surveiller : les 3 dernières notes sont inférieures de ${pts(sub.delta ?? 0)} aux précédentes.`,
+    flat: "Stable : les dernières notes restent proches de la moyenne.",
+    few: "Moyenne indicative : il faut au moins 3 notes pour dégager une tendance." }[sub.trend];
+  const clsTxt = gap == null ? "" : Math.abs(gap) < 0.1 ? "Au niveau de la moyenne de classe." : `${pts(gap)} ${gap > 0 ? "au-dessus" : "en dessous"} de la moyenne de classe.`;
+  const hw = HW.filter((h) => h.matiere === name && !h.rendu && h.date >= TODAY);
+  const col = `var(--subject-${sIdx(name) % 7 + 1})`;
+  return head + `<div class="grid">
+    <section class="card hero l-5 rise" aria-labelledby="h-m">
+      <p class="t-label" id="h-m">Moyenne · ${esc(state.p.nom)}</p>
+      <div class="hero-row"><p class="hero-v"><span class="hero-big" data-count="${sub.avg}">${fmt(sub.avg)}</span><span class="hero-unit">/20</span></p>${badge(sub.trend)}</div>
+      ${meter(sub)}
+      <dl class="facts"><div><dt>Classe</dt><dd>${fmt(sub.cls)}</dd></div><div><dt>Écart</dt><dd>${gap == null ? "—" : fmtD(gap)}</dd></div>
+        <div><dt>Notes</dt><dd>${sub.arr.length}</dd></div><div><dt>Min – max</dt><dd>${fmt(sub.min)}–${fmt(sub.max)}</dd></div></dl>
+      <p class="hero-sum">${trendTxt} ${clsTxt}</p>
+    </section>
+    <section class="card l-7 rise" style="--i:1" aria-labelledby="h-mc">
+      <div class="card-h"><h2 id="h-mc">Notes et moyenne</h2></div>
+      <div class="keys" aria-hidden="true"><span class="key">${dot(name)}Notes sur 20</span><span class="key"><i class="kl" style="--c:${col}"></i>Moyenne cumulée</span><span class="key"><i class="kl dash"></i>Moyenne de la classe</span></div>
+      <div class="chart"><canvas id="c-subj" role="img" aria-label="Notes de ${esc(name)} et moyenne cumulée comparées à la classe, détail dans le tableau « Toutes les notes »."></canvas><div class="tip" id="t-subj" hidden></div></div>
+    </section>
+    <section class="card l-7 rise" style="--i:2" aria-labelledby="h-mn"><div class="card-h"><h2 id="h-mn">Toutes les notes</h2></div>${notesTable([...sub.arr].reverse(), false)}</section>
+    <section class="card l-5 rise" style="--i:3" aria-labelledby="h-mh"><div class="card-h"><h2 id="h-mh">Devoirs à venir</h2></div>
+      ${hw.length ? `<ul class="hw-list">${hw.map((h) => hwRow(h, "")).join("")}</ul>` : `<p class="t-meta">Aucun devoir prévu dans cette matière.</p>`}</section>
+  </div>`;
+}
+
+// ── Graphiques (Chart.js) ──
+let charts = [];
+function tipHandler(el, build) {
+  return ({ chart, tooltip }) => {
+    if (!el) return;
+    if (!tooltip || tooltip.opacity === 0 || !tooltip.dataPoints?.length) { el.hidden = true; return; }
+    el.innerHTML = build(tooltip.dataPoints[0]);
+    el.hidden = false;
+    const half = el.offsetWidth / 2;
+    el.style.left = Math.min(Math.max(tooltip.caretX, half + 4), chart.width - half - 4) + "px";
+    el.style.top = tooltip.caretY + "px";
+    el.classList.toggle("below", tooltip.caretY < el.offsetHeight + 20);
+  };
+}
+const noteTip = (dp) => { const r = dp.raw, n = r.n; return `<p class="tip-s">${dot(n.matiere)}${esc(n.matiere)}</p><p class="tip-m">${dShort(n.date)} · ${esc(n.devoir)}</p>
+  <div class="tip-row"><span>Note<b>${fmtRaw(n.note)}/${fmtRaw(n.sur)}</b></span><span>Moyenne<b>${fmt(r.avg)}</b></span></div>`; };
+
+function drawCharts() {
+  charts.forEach((c) => c.destroy()); charts = [];
+  const canvases = document.querySelectorAll("canvas");
+  if (!canvases.length) return;
+  if (!window.Chart) { document.querySelectorAll(".chart").forEach((el) => el.classList.add("is-off")); document.querySelectorAll("details.data").forEach((d) => d.open = true); return; }
+  const cs = getComputedStyle(root), v = (n) => cs.getPropertyValue(n).trim();
+  Object.assign(Chart.defaults, { color: v("--muted"), maintainAspectRatio: false, animation: RM ? false : { duration: 500, easing: "easeOutQuart" } });
+  Chart.defaults.font.family = v("--f-body"); Chart.defaults.font.size = 13;
+  const grid = { color: v("--line") }, line = v("--line-strong"), fg = v("--fg"), surf = v("--surface");
+  const subjCol = (name) => v(`--subject-${sIdx(name) % 7 + 1}`);
+  const ptStyle = (name, col) => { const [s, r] = PSTYLE[sIdx(name) % 7], cross = s.startsWith("cross");
+    return { pointStyle: s, rotation: r, pointBackgroundColor: col, pointBorderColor: cross ? col : surf, pointBorderWidth: cross ? 2.5 : 1.5 }; };
+  const xDates = (all) => { const xs = all.map((n) => dayN(n.date)); let a = Math.min(...xs) - 2, b = Math.max(...xs) + 2; if (b - a < 10) { a -= 4; b += 4; }
+    return { type: "linear", min: a, max: b, grid: { display: false }, border: { color: line },
+      afterBuildTicks: (ax) => { const t = []; for (let d = Math.ceil((ax.min - 4) / 7) * 7 + 4; d <= ax.max; d += 7) t.push({ value: d }); ax.ticks = t; },
+      ticks: { callback: (x) => dShort(fromDay(x)), maxRotation: 0 } }; };
+  const y20 = { min: 0, max: 20, ticks: { stepSize: 5 }, grid, border: { display: false } };
+
+  const t = $("#c-trend");
+  if (t && cur) charts.push(new Chart(t, {
+    type: "line",
+    data: { datasets: cur.subjects.map((s) => { const col = subjCol(s.name);
+      return { label: s.name, data: s.cumul.map((c) => ({ x: dayN(c.n.date), y: c.y, avg: c.y, n: c.n })), borderColor: col, backgroundColor: col,
+        borderWidth: 2.5, tension: .38, pointRadius: 5, pointHoverRadius: 7, pointHitRadius: 10, borderDash: sIdx(s.name) >= 7 ? [6, 4] : [],
+        hidden: state.hidden.has(s.name), ...ptStyle(s.name, col) }; }) },
+    options: { interaction: { mode: "nearest", intersect: false }, scales: { x: xDates(cur.notes), y: y20 },
+      plugins: { legend: { display: false }, tooltip: { enabled: false, external: tipHandler($("#t-trend"), noteTip) } } },
+  }));
+
+  const c = $("#c-class");
+  if (c && cur) {
+    const list = cur.subjects;
+    const labels = { id: "labels", afterDatasetsDraw(ch) {
+      const ctx = ch.ctx, bars = ch.getDatasetMeta(0).data, marks = ch.getDatasetMeta(1).data;
+      ctx.save(); ctx.font = `600 14px ${v("--f-data")}`; ctx.fillStyle = fg; ctx.textBaseline = "middle";
+      bars.forEach((b, i) => { const m = marks[i]; const x = Math.max(b.x, m && !m.skip && list[i].cls != null ? m.x : 0) + 10; ctx.fillText(fmt(list[i].avg), x, b.y); });
+      ctx.restore(); } };
+    charts.push(new Chart(c, {
+      type: "bar",
+      data: { labels: list.map((s) => s.name), datasets: [
+        { type: "bar", label: "Élève", data: list.map((s) => s.avg), backgroundColor: list.map((s) => subjCol(s.name)), borderRadius: 999, borderSkipped: false, barThickness: 18, order: 2 },
+        { type: "line", label: "Classe", data: list.map((s) => s.cls), showLine: false, pointStyle: "line", rotation: 90, pointRadius: 13, pointHoverRadius: 13,
+          pointBorderWidth: 3, pointBorderColor: fg, borderColor: fg, order: 1 } ] },
+      options: { indexAxis: "y", layout: { padding: { right: 44 } }, interaction: { mode: "index", axis: "y", intersect: false },
+        scales: { x: { ...y20, border: { display: false } }, y: { grid: { display: false }, border: { color: line }, ticks: { color: fg, font: { size: 14, weight: 600 } } } },
+        plugins: { legend: { display: false }, tooltip: { enabled: false, external: tipHandler($("#t-class"), (dp) => { const s = list[dp.dataIndex];
+          return `<p class="tip-s">${dot(s.name)}${esc(s.name)}</p><div class="tip-row"><span>Élève<b>${fmt(s.avg)}</b></span><span>Classe<b>${fmt(s.cls)}</b></span></div>`; }) } } },
+      plugins: [labels],
+    }));
+  }
+
+  const m = $("#c-subj"), sub = cur?.subjects.find((s) => s.name === route().s);
+  if (m && sub) {
+    const col = subjCol(sub.name), pt = (c, y) => ({ x: dayN(c.n.date), y, avg: c.y, n: c.n });
+    charts.push(new Chart(m, {
+      type: "line",
+      data: { datasets: [
+        { type: "scatter", label: "Notes", data: sub.cumul.map((c) => pt(c, c.n.n20)), pointRadius: 6, pointHoverRadius: 8, pointHitRadius: 12, order: 1, ...ptStyle(sub.name, col) },
+        { label: "Moyenne", data: sub.cumul.map((c) => pt(c, c.y)), borderColor: col, borderWidth: 2.5, tension: .25, pointRadius: 0, pointHitRadius: 8, order: 2 },
+        { label: "Classe", data: sub.cumul.filter((c) => c.c != null).map((c) => pt(c, c.c)), borderColor: v("--muted"), borderDash: [5, 5], borderWidth: 2, tension: .25, pointRadius: 0, pointHitRadius: 8, order: 3 } ] },
+      options: { interaction: { mode: "nearest", intersect: false }, scales: { x: xDates(sub.arr), y: y20 },
+        plugins: { legend: { display: false }, tooltip: { enabled: false, external: tipHandler($("#t-subj"), (dp) => { const r = dp.raw, n = r.n;
+          return `<p class="tip-s">${dot(n.matiere)}${esc(n.devoir)}</p><p class="tip-m">${dShort(n.date)} · coef. ${fmtRaw(n.coef)}</p>
+          <div class="tip-row"><span>Note<b>${fmt(n.n20)}</b></span><span>Classe<b>${fmt(n.cls20)}</b></span></div>`; }) } } },
+    }));
+  }
+}
+
+// ── Navigation et rendu ──
+function route() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (h.startsWith("matiere/")) return { v: "matiere", s: h.slice(8) };
+  if (h === "devoirs") return { v: "devoirs" };
+  return { v: "accueil" };
+}
+const isDark = () => root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+
+function render() {
+  const r = route(), page = r.v === "accueil";
+  cur = stats(state.p);
+  $("#top").classList.toggle("is-page", page);
+  const nm = DATA?.eleve || "Bienvenue";
+  $("#who").innerHTML = `<span class="avatar" aria-hidden="true">${esc(nm.trim().charAt(0).toUpperCase())}</span><div class="who-t">
+    <p class="t-label">Carnet de bord</p><p class="who-n">${esc(nm)}</p>
+    <p class="t-meta">${DATA ? `${DATA.classe ? esc(DATA.classe) + " · " : ""}mis à jour le ${dShort(TODAY).replace(/^0/, "")}${DATA.exemple ? ` · <span class="tag">exemple</span>` : ""}` : "Aucune donnée"}</p></div>`;
+  const urgent = weekNumbers().urgent;
+  $("#tabs").innerHTML = `<a class="tab" href="#"${r.v !== "devoirs" ? ' aria-current="page"' : ""}>Accueil</a>
+    <a class="tab" href="#devoirs"${r.v === "devoirs" ? ' aria-current="page"' : ""}>Devoirs${urgent ? ` <span class="count" aria-label="${urgent} pour demain ou en retard">${urgent}</span>` : ""}</a>`;
+  $("#theme").setAttribute("aria-label", isDark() ? "Passer au thème clair" : "Passer au thème sombre");
+  const main = $("#main");
+  main.removeAttribute("aria-busy");
+  main.innerHTML = r.v === "devoirs" ? vDevoirs() : r.v === "matiere" ? vMatiere(r.s) : vAccueil();
+  tagWidgets();
+  drawCharts();
+  countUp();
+}
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-period],[data-filter],[data-toggle]");
+  if (!b) return;
+  if (b.dataset.period) { state.p = PERIODS.find((p) => p.id === b.dataset.period) || state.p; render(); $(`[data-period="${state.p.id}"]`)?.focus(); }
+  else if (b.dataset.filter) { state.f = b.dataset.filter; render(); $(`[data-filter="${state.f}"]`)?.focus(); }
+  else {
+    const name = b.dataset.toggle, on = state.hidden.has(name);
+    on ? state.hidden.delete(name) : state.hidden.add(name);
+    b.setAttribute("aria-pressed", String(on));
+    const ch = charts.find((c) => c.canvas.id === "c-trend"), i = ch?.data.datasets.findIndex((d) => d.label === name);
+    if (ch && i >= 0) { ch.setDatasetVisibility(i, on); ch.update(); }
+  }
+});
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); $("main h1, #who h1")?.focus({ preventScroll: true }); });
+$("#theme").addEventListener("click", () => {
+  root.dataset.theme = isDark() ? "light" : "dark";
+  try { localStorage.setItem("carnet-theme", root.dataset.theme); } catch (e) {}
+  render();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { if (!root.dataset.theme) render(); });
+
+// ── Widgets déplaçables : clic gauche maintenu (ou toucher long) puis glisser ──
+const ORDER_KEY = "carnet-ordre";
+// Ordre : fichier data/layout.json (via le mini-serveur) en priorité, sinon navigateur
+const lsGet = () => { try { return JSON.parse(localStorage.getItem(ORDER_KEY)) || []; } catch (e) { return []; } };
+const lsSet = (a) => { try { a ? localStorage.setItem(ORDER_KEY, JSON.stringify(a)) : localStorage.removeItem(ORDER_KEY); } catch (e) {} };
+const saveRemote = (a) => fetch("/api/layout", { method: "POST", headers: { "X-Vie-Scolaire": "1", "Content-Type": "application/json" }, body: JSON.stringify(a || []) }).catch(() => {});
+let ORDER = Array.isArray(DATA?.layout) && DATA.layout.length ? DATA.layout : lsGet();
+const getOrder = () => ORDER;
+const setOrder = (a) => { ORDER = a || []; lsSet(a); saveRemote(a); };
+// Première fois : l'arrangement déjà fait dans ce navigateur devient l'ordre par défaut du serveur
+if (!(DATA?.layout || []).length && ORDER.length) saveRemote(ORDER);
+const WSEL = "#main .grid>[data-w]";
+
+function tagWidgets() {
+  const g = $("#main .grid");
+  if (!g || route().v !== "accueil") return;
+  [...g.children].forEach((el, i) => {
+    el.dataset.w = el.getAttribute("aria-labelledby") || (el.querySelector(".t-label")?.textContent.trim()) || `w${i}`;
+    el.dataset.t = (el.querySelector("h2, .t-label")?.textContent || "Bloc").trim();
+  });
+  const ord = getOrder();
+  [...g.children].map((el, i) => [el, ord.indexOf(el.dataset.w) >= 0 ? ord.indexOf(el.dataset.w) : 1000 + i])
+    .sort((a, b) => a[1] - b[1]).forEach(([el]) => g.appendChild(el));
+  g.insertAdjacentHTML("afterend", `<p class="t-meta drag-hint">Astuce : maintenez le clic gauche sur un bloc pour le déplacer. <button type="button" class="linkbtn" data-reset-order>Réinitialiser l'ordre</button></p>`);
+}
+
+(() => {
+  let st = null, swallow = false, scroller = null;
+  const HOLD = 220;
+  const ids = () => [...document.querySelectorAll(WSEL)].map((e) => e.dataset.w);
+
+  function start() {
+    if (!st || st.active) return;
+    st.active = true; clearTimeout(st.timer);
+    // Les animations d'entrée ne doivent pas se rejouer quand un bloc change de place
+    document.querySelectorAll(WSEL).forEach((e) => e.classList.remove("rise"));
+    st.el.classList.add("drag-src");
+    st.ghost = document.createElement("div");
+    st.ghost.className = "drag-ghost"; st.ghost.textContent = st.el.dataset.t;
+    document.body.append(st.ghost);
+    document.body.classList.add("dragging");
+    navigator.vibrate?.(12);
+    place();
+    scroller = setInterval(() => { if (st?.y < 70) scrollBy(0, -16); else if (st && st.y > innerHeight - 70) scrollBy(0, 16); hit(); }, 30);
+  }
+  function place() { if (st?.ghost) st.ghost.style.transform = `translate(${st.x + 14}px, ${st.y + 14}px)`; }
+  function hit() {
+    if (!st?.active) return;
+    const t = document.elementsFromPoint(st.x, st.y).map((n) => n.closest?.(WSEL)).find((n) => n && n !== st.el);
+    if (!t) return;
+    const g = t.parentElement, r = t.getBoundingClientRect(), wide = r.width > g.getBoundingClientRect().width * 0.7;
+    const before = wide ? st.y < r.top + r.height / 2 : st.x < r.left + r.width / 2;
+    const ref = before ? t : t.nextSibling;
+    if (ref !== st.el && st.el.nextSibling !== ref) g.insertBefore(st.el, ref);
+  }
+  function end(cancel) {
+    if (!st) return;
+    clearTimeout(st.timer); clearInterval(scroller);
+    if (st.active) {
+      st.el.classList.remove("drag-src"); st.ghost?.remove(); document.body.classList.remove("dragging");
+      if (!cancel) setOrder(ids());
+      swallow = true; setTimeout(() => (swallow = false), 0);
+    }
+    st = null;
+  }
+
+  document.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const el = e.target.closest?.(WSEL);
+    if (!el || e.target.closest("button, summary, input, select, textarea, .legend, .tip")) return;
+    st = { el, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, active: false, mouse: e.pointerType === "mouse" };
+    st.timer = setTimeout(start, HOLD);
+  });
+  document.addEventListener("pointermove", (e) => {
+    if (!st) return;
+    st.x = e.clientX; st.y = e.clientY;
+    if (!st.active) {
+      if (Math.hypot(st.x - st.x0, st.y - st.y0) > 8) { st.mouse ? start() : (clearTimeout(st.timer), (st = null)); }
+      return;
+    }
+    place(); hit();
+  });
+  document.addEventListener("pointerup", () => end(false));
+  document.addEventListener("pointercancel", () => end(false));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && st?.active) end(true); });
+  // Empêche : glisser-déposer natif des liens, défilement tactile et menu contextuel pendant le déplacement
+  document.addEventListener("dragstart", (e) => { if (e.target.closest?.(WSEL)) e.preventDefault(); });
+  document.addEventListener("touchmove", (e) => { if (st?.active) e.preventDefault(); }, { passive: false });
+  document.addEventListener("contextmenu", (e) => { if (st && e.target.closest?.(WSEL)) e.preventDefault(); });
+  document.addEventListener("click", (e) => { if (swallow) { e.preventDefault(); e.stopPropagation(); } }, true);
+  document.addEventListener("click", (e) => { if (e.target.closest?.("[data-reset-order]")) { setOrder(null); render(); } });
+})();
+
+// ── Actions locales : npm run sync / npm run resume via le mini-serveur (npm run serve) ──
+(() => {
+  const box = $("#actions"), toast = $("#toast"), dlg = $("#synth");
+  let timer;
+  const say = (m, ms = 6000) => { toast.textContent = m; toast.hidden = false; clearTimeout(timer); if (ms) timer = setTimeout(() => (toast.hidden = true), ms); };
+  const api = (path, post) => fetch(path, { method: post ? "POST" : "GET", headers: { "X-Vie-Scolaire": "1" } }).then((r) => r.json());
+  fetch("/api/ping", { headers: { "X-Vie-Scolaire": "1" } }).then((r) => r.ok && r.json()).then((j) => { if (j?.ok) box.hidden = false; }).catch(() => {});
+
+  $("#act-sync").addEventListener("click", async (e) => {
+    const b = e.currentTarget; b.disabled = true; b.classList.add("busy");
+    say("Mise à jour en cours (notes et devoirs sur 21 jours)…", 0);
+    try {
+      const r = await api("/api/sync", true);
+      if (r.ok) { say("Données à jour. Rechargement…", 0); setTimeout(() => location.reload(), 600); return; }
+      say(r.error || "La mise à jour a échoué.", 10000);
+    } catch { say("Serveur local injoignable : relancez npm run serve.", 10000); }
+    b.disabled = false; b.classList.remove("busy");
+  });
+  $("#act-resume").addEventListener("click", async () => {
+    try {
+      const r = await api("/api/resume");
+      $("#synth-body").textContent = r.text || "Aucune synthèse : cliquez sur Actualiser.";
+      dlg.showModal();
+    } catch { say("Serveur local injoignable : relancez npm run serve.", 10000); }
+  });
+  $("#synth-close").addEventListener("click", () => dlg.close());
+
+  // Accès mobile : QR code vers l'adresse du PC sur le réseau local (npm run serve:mobile)
+  const mob = $("#mob"), mbody = $("#mob-body");
+  $("#mob-close").addEventListener("click", () => mob.close());
+  $("#act-mobile").addEventListener("click", async () => {
+    mbody.textContent = "…"; mob.showModal();
+    let r; try { r = await api("/api/mobile"); } catch { mbody.textContent = "Serveur local injoignable."; return; }
+    if (!r.enabled || !r.urls?.length) {
+      mbody.innerHTML = `<p>L'accès mobile est désactivé. Arrêtez le serveur puis lancez <b>npm run serve:mobile</b>, et cliquez de nouveau sur Mobile.</p>`;
+      return;
+    }
+    const u = r.urls[0];
+    mbody.innerHTML = `<p>Sur le même Wi-Fi que ce PC, scannez ce code avec l'appareil photo du téléphone.</p><div id="qr" style="display:grid;place-items:center;padding:12px;background:#fff;border-radius:16px;width:max-content;margin:12px auto"></div>
+      <p class="t-meta">Ou saisissez : <code></code></p><p class="t-meta">Le lien contient une clé personnelle : ne le partagez pas. Il ne fonctionne qu'à la maison, PC allumé.</p>`;
+    mbody.querySelector("code").textContent = u;
+    const draw = () => new QRCode($("#qr"), { text: u, width: 200, height: 200 });
+    if (window.QRCode) draw(); else { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"; sc.onload = draw; sc.onerror = () => ($("#qr").textContent = "QR indisponible : saisissez l'adresse."); document.head.append(sc); }
+  });
+})();
+
+if (APERCU !== "chargement") (document.fonts?.ready ?? Promise.resolve()).then(render, render);
+</script>
+</body>
+</html>
