@@ -38,7 +38,7 @@ export default async function handler(req, res) {
 
   const headers = { "User-Agent": UA };
   const cookies = b.cookies && typeof b.cookies === "object" ? b.cookies : {};
-  const jar = Object.entries(cookies).filter(([k, val]) => /^[\w.-]{1,64}$/.test(k) && str(val)).slice(0, 20);
+  const jar = Object.entries(cookies).filter(([k, val]) => /^[\w.-]{1,1024}$/.test(k) && str(val)).slice(0, 20);
   if (jar.length) headers.Cookie = jar.map(([k, val]) => `${k}=${val}`).join("; ");
   if (!isGtk) {
     headers["Content-Type"] = "application/x-www-form-urlencoded";
