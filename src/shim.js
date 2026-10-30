@@ -1,4 +1,5 @@
-// ── Version mobile : le téléphone interroge Ecole Directe lui-même (via /api/ed) ──
+// ── Version mobile : le téléphone interroge Ecole Directe (via /api/ed) et PRONOTE (via /api/pronote) ──
+// Plusieurs élèves possibles : chacun sur Ecole Directe ou sur PRONOTE (liste dans vs-eleves).
 // Remplace le mini-serveur du PC : les appels /api/* du dashboard sont traités ici, dans le navigateur.
 (() => {
   const LS = {
@@ -10,7 +11,6 @@
   // Clé du relais : fournie une fois dans le lien d'installation (?k=…), puis mémorisée et retirée de l'adresse
   const qs = new URLSearchParams(location.search);
   if (qs.get("k")) { LS.set("vs-key", qs.get("k")); qs.delete("k"); history.replaceState(null, "", location.pathname + (qs.toString() ? "?" + qs : "") + location.hash); }
-  window.VS_DATA = LS.get("vs-data");
 
   const origFetch = window.fetch.bind(window);
   const b64 = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
@@ -22,6 +22,7 @@
   const htmlToText = (h) => { const d = new DOMParser().parseFromString(h.replace(/<br\s*\/?>|<\/p>|<\/li>/gi, " "), "text/html"); return (d.body.textContent || "").replace(/\s+/g, " ").trim(); };
 
   class NeedLogin extends Error {}
+  class NeedPronote extends Error { constructor(e, m) { super(m || "Reconnectez-vous à PRONOTE."); this.eleve = e; } }
 
   // ── Client Ecole Directe (même logique que src/ecoledirecte/client.ts) ──
   let S = LS.get("vs-session") || {};
@@ -29,6 +30,7 @@
   const creds = () => memCreds || LS.get("vs-creds");
   const saveS = () => LS.set("vs-session", S);
 
+  window.VS_DATA = null; // composé plus bas, une fois les fonctions élèves définies
   async function relay(path, data, get) {
     const key = LS.get("vs-key");
     if (!key) throw new Error("Clé d'accès absente : ouvrez une fois le lien d'installation complet (avec ?k=…).");
@@ -138,6 +140,122 @@
       hw.length ? "" : "Aucun devoir."].join("\n");
   }
 
+  // ── Élèves suivis : Ecole Directe (clés historiques vs-data, vs-session…) et PRONOTE (vs-data:<id>, vs-pn:<id>) ──
+  const hasED = () => !!(LS.get("vs-data") || LS.get("vs-session")?.accountId);
+  function eleves() {
+    const list = LS.get("vs-eleves");
+    if (Array.isArray(list)) return list;
+    return hasED() ? [{ id: "ecoledirecte", nom: (S.accountName || "").split(" ")[0] || "Ecole Directe", source: "ecoledirecte" }] : [];
+  }
+  const saveEleves = (l) => LS.set("vs-eleves", l);
+  const dkey = (e) => (e.source === "ecoledirecte" ? "vs-data" : "vs-data:" + e.id);
+  function composeData() {
+    const list = eleves().filter((e) => LS.get(dkey(e)));
+    if (!list.length) return null;
+    const layout = LS.get("vs-layout") || undefined;
+    const sets = list.map((e) => ({ ...LS.get(dkey(e)), layout }));
+    if (sets.length === 1) return sets[0];
+    return { multi: true, eleves: list.map((e, i) => ({ id: e.id, nom: e.nom || sets[i].prenom || sets[i].eleve, source: e.source, classe: sets[i].classe || "" })),
+      data: Object.fromEntries(list.map((e, i) => [e.id, sets[i]])) };
+  }
+
+  /*__SUMMARY__*/
+
+  const memPn = {};
+  const pnCreds = (id) => memPn[id] || LS.get("vs-pn:" + id);
+  const uuid = () => "carnet-" + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+  const slug = (x) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "eleve";
+
+  async function pronoteCall(e, c, childIndex = e.enfant) {
+    const key = LS.get("vs-key");
+    if (!key) throw new Error("Clé d'accès absente : ouvrez une fois le lien d'installation complet (avec ?k=…).");
+    let r;
+    try {
+      r = await origFetch("/api/pronote", { method: "POST", headers: { "Content-Type": "application/json", "X-VS-Key": key },
+        body: JSON.stringify({ url: e.url, username: c.u, password: c.p, token: c.token, deviceUUID: c.uuid, childIndex, days: DAYS }) });
+    } catch (x) { throw new Error("Pas de connexion internet."); }
+    if (r.status === 401) throw new Error("Clé d'accès refusée : rouvrez le lien d'installation.");
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Relais PRONOTE indisponible (${r.status}).`);
+    if (!j.ok) throw Object.assign(new Error(j.error || "Erreur PRONOTE."), { auth: !!j.auth });
+    return j;
+  }
+  function storePn(e, c, keep, j) {
+    if (j.refresh?.token) c.token = j.refresh.token;
+    if (j.refresh?.username) c.u = j.refresh.username;
+    memPn[e.id] = c;
+    if (keep) LS.set("vs-pn:" + e.id, c);
+    j.data.prenom = e.nom;
+    LS.set("vs-data:" + e.id, j.data);
+    LS.set("vs-summary:" + e.id, summaryMd(j.data, { days: DAYS, periodeNom: j.data.periodes?.find((p) => p.id === j.data.officielPeriode)?.nom }));
+  }
+  async function syncPronote(e) {
+    const c = pnCreds(e.id);
+    if (!c) throw new NeedPronote(e, "Identifiants PRONOTE à saisir.");
+    let j;
+    try { j = await pronoteCall(e, c); }
+    catch (x) { if (x.auth) throw new NeedPronote(e, x.message); throw x; }
+    storePn(e, c, !!LS.get("vs-pn:" + e.id), j);
+    return { notes: j.data.notes.length, devoirs: j.data.devoirs.length };
+  }
+  const syncOne = (e) => (e.source === "pronote" ? syncPronote(e) : sync());
+
+  // Fenêtre PRONOTE : ajout d'un élève (e absent) ou reconnexion (e fourni)
+  function openPronote(e, msg) {
+    return new Promise((resolve) => {
+      const d = el(`<dialog class="synth vs-login" aria-labelledby="vs-pt"><h2 id="vs-pt"></h2><div></div></dialog>`);
+      d.querySelector("h2").textContent = e ? `PRONOTE · ${e.nom}` : "Ajouter un élève PRONOTE";
+      const body = d.querySelector("div");
+      document.body.append(d);
+      const c0 = e ? pnCreds(e.id) || {} : {};
+      body.innerHTML = `<form class="vs-form">${msg ? `<p class="t-meta"></p>` : ""}
+        ${e ? "" : `<label>Prénom affiché<input name="n" autocomplete="off" required maxlength="40"></label>
+        <label>Adresse PRONOTE de l'établissement<input name="url" inputmode="url" autocapitalize="none" spellcheck="false" placeholder="https://…index-education.net/pronote/eleve.html" required></label>`}
+        <label>Identifiant PRONOTE<input name="u" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+        <label>Mot de passe<input name="p" type="password" autocomplete="current-password" required></label>
+        <label class="vs-check"><input name="r" type="checkbox" checked> Rester connecté sur ce téléphone</label>
+        <p class="vs-err" role="alert" hidden></p><div class="vs-kids"></div>
+        <div class="vs-choices"><button class="act primary" type="submit">Se connecter</button><button class="act" type="button" data-x>Annuler</button></div>
+        <p class="t-meta">L'adresse est celle de l'espace élève (ou parent) sur PRONOTE. Les identifiants restent sur ce téléphone ; ils passent par votre relais privé le temps de l'appel, sans y être enregistrés.</p></form>`;
+      const f = body.querySelector("form");
+      if (msg) f.querySelector(".t-meta").textContent = msg;
+      f.u.value = c0.u || "";
+      const err = (m) => { const x = f.querySelector(".vs-err"); x.textContent = m || ""; x.hidden = !m; };
+      const btn = f.querySelector("button[type=submit]");
+      const finish = (ok) => { d.close(); d.remove(); resolve(ok); };
+      f.querySelector("[data-x]").onclick = () => finish(false);
+      d.addEventListener("cancel", (ev) => { ev.preventDefault(); finish(false); });
+      f.addEventListener("submit", async (ev) => {
+        ev.preventDefault(); err("");
+        const entry = e ? { ...e } : { id: "", nom: f.n.value.trim(), source: "pronote", url: f.url.value.trim() };
+        if (!e) { let id = slug(entry.nom), k = 2; while (eleves().some((x) => x.id === id)) id = slug(entry.nom) + "-" + k++; entry.id = id; }
+        const c = { u: f.u.value.trim(), p: f.p.value, uuid: c0.uuid || uuid() };
+        const keep = f.r.checked;
+        btn.disabled = true; btn.textContent = "Connexion…";
+        const go = async (childIndex) => {
+          try {
+            const j = await pronoteCall(entry, keep ? c : { ...c }, childIndex);
+            if (childIndex == null && j.enfants?.length > 1) { // compte parent : choisir l'enfant
+              const box = f.querySelector(".vs-kids");
+              box.innerHTML = `<p><b>Quel enfant suivre ?</b></p><div class="vs-choices"></div>`;
+              for (const k of j.enfants) { const b = el(`<button class="act" type="button"></button>`); b.textContent = k.nom + (k.classe ? ` (${k.classe})` : ""); b.onclick = () => { box.innerHTML = ""; go(k.index); }; box.lastChild.append(b); }
+              btn.textContent = "Se connecter"; return;
+            }
+            if (childIndex != null) entry.enfant = childIndex;
+            if (!keep) LS.set("vs-pn:" + entry.id, null);
+            storePn(entry, c, keep, j);
+            const list = eleves();
+            saveEleves([...list.filter((x) => x.id !== entry.id), entry]);
+            LS.set("vs-synced-at", Date.now());
+            finish(true);
+          } catch (x) { err(x.message); btn.disabled = false; btn.textContent = "Se connecter"; }
+        };
+        go(entry.enfant);
+      });
+      d.showModal();
+    });
+  }
+
   // ── Fenêtre de connexion ──
   let dlg;
   const el = (h) => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
@@ -156,9 +274,11 @@
           <label class="vs-check"><input name="r" type="checkbox" checked> Rester connecté sur ce téléphone</label>
           <p class="vs-err" role="alert" hidden></p>
           <button class="act primary" type="submit">Se connecter</button>
+          <button class="act" type="button" data-pn>Élève sur PRONOTE ? Ajouter un compte PRONOTE</button>
           <p class="t-meta">Vos identifiants restent sur ce téléphone. Ils passent par votre relais privé le temps de l'appel, sans y être enregistrés.</p></form>`;
         const f = body.querySelector("form");
         f.u.value = c.u || "";
+        f.querySelector("[data-pn]").onclick = async () => { dlg.close(); const ok = await openPronote(); if (ok) resolve(true); else dlg.showModal(); };
         f.addEventListener("submit", async (e) => {
           e.preventDefault(); err("");
           const btn = f.querySelector("button"); btn.disabled = true; btn.textContent = "Connexion…";
@@ -191,12 +311,26 @@
     });
   }
 
-  async function runSync() {
-    try { await sync(); return { ok: true }; }
-    catch (x) {
-      if (!(x instanceof NeedLogin)) return { ok: false, error: x.message };
-      return (await openLogin("La session a expiré, reconnectez-vous.")) ? { ok: true } : { ok: false, error: "Connexion annulée." };
+  // Met à jour chaque élève ; ouvre la fenêtre de connexion adaptée si une session a expiré (interactive) ou passe (silencieux)
+  async function syncAll(interactive) {
+    const list = eleves(), errs = [];
+    for (const e of list) {
+      try { await syncOne(e); }
+      catch (x) {
+        let ok = false;
+        if (interactive && x instanceof NeedLogin) ok = await openLogin("La session Ecole Directe a expiré, reconnectez-vous.");
+        else if (interactive && x instanceof NeedPronote) ok = await openPronote(x.eleve, x.message);
+        if (!ok) errs.push(`${e.nom || e.id} : ${x instanceof NeedLogin ? "connexion Ecole Directe à refaire" : x.message}`);
+      }
     }
+    if (errs.length < list.length) LS.set("vs-synced-at", Date.now());
+    return { total: list.length, errs };
+  }
+  async function runSync() {
+    const r = await syncAll(true);
+    if (r.total && r.errs.length === r.total) return { ok: false, error: r.errs.join(" · ") };
+    LS.set("vs-warn", r.errs.length ? "Pas à jour : " + r.errs.join(" · ") : null);
+    return { ok: true };
   }
 
   // ── Les routes /api/* du dashboard, traitées sur le téléphone ──
@@ -205,7 +339,7 @@
     if (!u.startsWith("/api/") || u.startsWith("/api/ed")) return origFetch(input, init);
     const reply = (o) => new Response(JSON.stringify(o), { headers: { "Content-Type": "application/json" } });
     if (u === "/api/ping") return Promise.resolve(reply({ ok: true }));
-    if (u === "/api/resume") return Promise.resolve(reply({ text: LS.get("vs-summary") || "" }));
+    if (u === "/api/resume") return Promise.resolve(reply({ text: eleves().map((e) => LS.get(e.source === "pronote" ? "vs-summary:" + e.id : "vs-summary")).filter(Boolean).join("\n\n---\n\n") }));
     if (u === "/api/layout") { try { LS.set("vs-layout", JSON.parse(init?.body || "[]")); } catch (e) {} return Promise.resolve(reply({ ok: true })); }
     if (u === "/api/sync") return runSync().then(reply);
     return Promise.resolve(reply({ error: "introuvable" }));
@@ -215,15 +349,35 @@
   function account() {
     const d = el(`<dialog class="synth" aria-labelledby="vs-a"><h2 id="vs-a">Compte</h2><div></div></dialog>`);
     const at = LS.get("vs-synced-at");
-    d.querySelector("div").innerHTML = `<p></p><p class="t-meta">${at ? "Dernière mise à jour : " + new Date(at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : ""}</p>
-      <p class="t-meta">${LS.get("vs-creds") ? "Identifiants mémorisés sur ce téléphone." : "Identifiants non mémorisés : il faudra les ressaisir quand la session expire."}</p>
-      <div class="vs-choices"><button class="act" type="button" data-a="out">Se déconnecter et effacer les données</button><button class="act primary" type="button" data-a="close">Fermer</button></div>`;
-    d.querySelector("p").textContent = S.accountName ? `Connecté : ${S.accountName}` : "Non connecté";
-    d.addEventListener("click", (e) => {
-      const a = e.target.closest("button")?.dataset.a;
+    const list = eleves();
+    d.querySelector("div").innerHTML = `<p class="t-meta">${at ? "Dernière mise à jour : " + new Date(at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : ""}</p>
+      <ul class="vs-list"></ul>
+      <div class="vs-choices"><button class="act" type="button" data-a="add">Ajouter un élève PRONOTE</button>${list.some((e) => e.source === "ecoledirecte") ? "" : `<button class="act" type="button" data-a="ed">Ajouter Ecole Directe</button>`}</div>
+      <div class="vs-choices"><button class="act" type="button" data-a="out">Tout effacer de ce téléphone</button><button class="act primary" type="button" data-a="close">Fermer</button></div>`;
+    const ul = d.querySelector(".vs-list");
+    for (const e of list) {
+      const li = el(`<li><div><b></b><p class="t-meta"></p></div><button class="act" type="button">Retirer</button></li>`);
+      li.querySelector("b").textContent = e.source === "ecoledirecte" ? (S.accountName || e.nom) : e.nom;
+      li.querySelector(".t-meta").textContent = e.source === "pronote"
+        ? `PRONOTE · ${LS.get("vs-pn:" + e.id) ? "identifiants mémorisés" : "identifiants non mémorisés"}`
+        : `Ecole Directe · ${LS.get("vs-creds") ? "identifiants mémorisés" : "identifiants non mémorisés"}`;
+      li.querySelector("button").onclick = () => {
+        if (!confirm(`Retirer ${li.querySelector("b").textContent} et effacer ses données de ce téléphone ?`)) return;
+        if (e.source === "ecoledirecte") ["vs-session", "vs-creds", "vs-data", "vs-summary"].forEach((k) => LS.set(k, null));
+        else ["vs-pn:", "vs-data:", "vs-summary:"].forEach((k) => LS.set(k + e.id, null));
+        saveEleves(eleves().filter((x) => x.id !== e.id));
+        location.reload();
+      };
+      ul.append(li);
+    }
+    if (!list.length) ul.append(Object.assign(document.createElement("li"), { textContent: "Aucun élève." }));
+    d.addEventListener("click", async (ev) => {
+      const a = ev.target.closest("button")?.dataset.a;
       if (a === "close") d.close();
-      if (a === "out" && confirm("Effacer la session, les identifiants et les notes de ce téléphone ?")) {
-        ["vs-session", "vs-creds", "vs-data", "vs-summary", "vs-synced-at", "vs-layout"].forEach((k) => LS.set(k, null));
+      if (a === "add") { d.close(); if (await openPronote()) location.reload(); }
+      if (a === "ed") { d.close(); const l = eleves(); if (await openLogin()) { saveEleves([{ id: "ecoledirecte", nom: (S.accountName || "").split(" ")[0] || "Ecole Directe", source: "ecoledirecte" }, ...l]); location.reload(); } }
+      if (a === "out" && confirm("Effacer les sessions, identifiants et notes de tous les élèves sur ce téléphone ?")) {
+        try { Object.keys(localStorage).filter((k) => k.startsWith("vs-") && k !== "vs-key").forEach((k) => localStorage.removeItem(k)); } catch (x) {}
         location.reload();
       }
     });
@@ -245,14 +399,18 @@
       if (t) { t.textContent = "Ouvrez une fois le lien d'installation complet (avec la clé ?k=…)."; t.hidden = false; }
       return;
     }
-    if (!LS.get("vs-data")) { openLogin().then((ok) => ok && location.reload()); return; }
-    // Mise à jour automatique à l'ouverture si les données ont plus de 3 h et que les identifiants sont mémorisés
-    if (LS.get("vs-creds") && Date.now() - (LS.get("vs-synced-at") || 0) > STALE_MS && navigator.onLine) {
-      const t = document.getElementById("toast");
+    if (!window.VS_DATA) { openLogin().then((ok) => ok && location.reload()); return; }
+    const t = document.getElementById("toast");
+    const warn = LS.get("vs-warn");
+    if (warn && t) { t.textContent = warn; t.hidden = false; setTimeout(() => (t.hidden = true), 8000); LS.set("vs-warn", null); }
+    // Mise à jour automatique à l'ouverture si les données ont plus de 3 h (élèves dont les identifiants sont mémorisés)
+    const auto = eleves().some((e) => (e.source === "pronote" ? LS.get("vs-pn:" + e.id) : LS.get("vs-creds")));
+    if (auto && Date.now() - (LS.get("vs-synced-at") || 0) > STALE_MS && navigator.onLine) {
       if (t) { t.textContent = "Mise à jour des notes…"; t.hidden = false; }
-      sync().then(() => location.reload(), () => { if (t) { t.textContent = "Mise à jour impossible : touchez Actualiser."; setTimeout(() => (t.hidden = true), 6000); } });
+      syncAll(false).then((r) => { if (r.errs.length < r.total) location.reload(); else if (t) { t.textContent = "Mise à jour impossible : touchez Actualiser."; setTimeout(() => (t.hidden = true), 6000); } });
     }
   });
 
+  window.VS_DATA = composeData();
   if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
 })();

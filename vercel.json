@@ -8,6 +8,9 @@
   "functions": {
     "api/ed.js": {
       "maxDuration": 20
+    },
+    "api/pronote.js": {
+      "maxDuration": 30
     }
   },
   "headers": [

@@ -1,1 +1,14 @@
-{ "name": "carnet-mobile", "private": true, "type": "module", "engines": { "node": "22.x" } }
+{
+  "name": "carnet-mobile",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "pawnote": "1.6.2"
+  },
+  "scripts": {
+    "postinstall": "node scripts/patch-pawnote.mjs"
+  }
+}

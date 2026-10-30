@@ -15,6 +15,10 @@
 .vs-form .vs-check input{width:20px;height:20px;accent-color:var(--accent)}
 .vs-err{margin:0;padding:var(--sp-2) var(--sp-3);border-radius:var(--r-1);background:var(--bad-bg);color:var(--bad);font-weight:600}
 .vs-choices{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-3)}
+.vs-list{list-style:none;padding:0;margin:var(--sp-3) 0;display:grid;gap:var(--sp-2)}
+.vs-list li{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);padding:10px 12px;border-radius:var(--r-1);background:var(--surface-2)}
+.vs-list li p{margin:0}
+.vs-kids:empty{display:none}
 .vs-login::backdrop{background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(6px)}
 @media (max-width:899px){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}
 </style>
