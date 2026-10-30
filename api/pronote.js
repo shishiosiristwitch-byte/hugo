@@ -23,7 +23,8 @@ export default async function handler(req, res) {
 
   let b;
   try { b = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body ?? {}; } catch { return res.status(400).json({ error: "JSON invalide" }); }
-  const url = str(b.url, 300), username = str(b.username, 200), password = str(b.password, 200), token = str(b.token, 1024);
+  const url = str(b.url, 300), username = str(b.username, 200), password = str(b.password, 200), token = str(b.token, 1024), tokenUsername = str(b.tokenUsername, 200);
+  const connexion = b.connexion === "ent" ? "ent" : undefined; // ÉduConnect par défaut si l'établissement passe par un ENT
   const deviceUUID = /^[\w-]{8,80}$/.test(b.deviceUUID ?? "") ? b.deviceUUID : undefined;
   if (!url || !username || !deviceUUID || (!password && !token)) return res.status(400).json({ error: "Paramètres manquants." });
   try { if (!hostOk(new URL(parseUrl(url).url).hostname)) return res.status(400).json({ error: "Adresse PRONOTE non autorisée : elle doit se terminer par index-education.net." }); }
@@ -34,7 +35,7 @@ export default async function handler(req, res) {
   const days = Number.isInteger(b.days) && b.days > 0 && b.days <= 60 ? b.days : 21;
 
   try {
-    const r = await fetchPronote({ url, username, password, token, deviceUUID, children, childIndex, days });
+    const r = await fetchPronote({ url, username, password, token, tokenUsername, connexion, deviceUUID, children, childIndex, days });
     return res.status(200).json({ ok: true, ...r });
   } catch (e) {
     const auth = ["BadCredentialsError", "SecurityError", "AccountDisabledError", "AccessDeniedError"].includes(e?.name);

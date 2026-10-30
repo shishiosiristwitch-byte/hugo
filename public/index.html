@@ -664,7 +664,7 @@ return summaryMd;
     let r;
     try {
       r = await origFetch("/api/pronote", { method: "POST", headers: { "Content-Type": "application/json", "X-VS-Key": key },
-        body: JSON.stringify({ url: c.url, username: c.u, password: c.p, token: c.token, deviceUUID: c.uuid, children: "all", days: DAYS }) });
+        body: JSON.stringify({ url: c.url, username: c.u, password: c.p, token: c.token, tokenUsername: c.tu, deviceUUID: c.uuid, children: "all", days: DAYS }) });
     } catch (x) { throw new Error("Pas de connexion internet."); }
     if (r.status === 401) throw new Error("Clé d'accès refusée : rouvrez le lien d'installation.");
     const j = await r.json().catch(() => ({}));
@@ -675,7 +675,7 @@ return summaryMd;
   }
   // Enregistre les données de chaque enfant et les ajoute à la liste des élèves (reconnus par leur nom PRONOTE)
   function storePn(k, c, keep, j) {
-    if (j.refresh?.token) c.token = j.refresh.token;
+    if (j.refresh?.token) { c.token = j.refresh.token; c.tu = j.refresh.username; } // le jeton va avec l'identifiant PRONOTE (différent de l'identifiant ENT)
     memPn[k] = c;
     LS.set("vs-pn:" + k, keep ? c : null);
     const list = eleves();
@@ -721,7 +721,7 @@ return summaryMd;
         <label class="vs-check"><input name="r" type="checkbox" checked> Rester connecté sur ce téléphone</label>
         <p class="vs-err" role="alert" hidden></p>
         <div class="vs-choices"><button class="act primary" type="submit">Se connecter</button><button class="act" type="button" data-x>Annuler</button></div>
-        <p class="t-meta">Un seul compte suffit : tous les élèves rattachés au compte PRONOTE (parent) sont ajoutés. Les identifiants restent sur ce téléphone ; ils passent par votre relais privé le temps de l'appel, sans y être enregistrés.</p></form>`;
+        <p class="t-meta">Un seul compte suffit : tous les élèves rattachés au compte PRONOTE (parent) sont ajoutés. Si l'établissement passe par l'ENT, utilisez l'identifiant ÉduConnect. Les identifiants restent sur ce téléphone ; ils passent par votre relais privé le temps de l'appel, sans y être enregistrés.</p></form>`;
       const f = body.querySelector("form");
       if (msg) { const m = f.querySelector("[data-msg]"); m.textContent = msg; m.hidden = false; }
       f.url.value = url0; f.u.value = c0.u || "";
@@ -831,6 +831,11 @@ return summaryMd;
     if (u === "/api/ping") return Promise.resolve(reply({ ok: true }));
     if (u === "/api/resume") return Promise.resolve(reply({ text: eleves().map((e) => LS.get(e.source === "pronote" ? "vs-summary:" + e.id : "vs-summary")).filter(Boolean).join("\n\n---\n\n") }));
     if (u === "/api/layout") { try { LS.set("vs-layout", JSON.parse(init?.body || "[]")); } catch (e) {} return Promise.resolve(reply({ ok: true })); }
+    if (u === "/api/status") return Promise.resolve(reply({ lastSync: LS.get("vs-synced-at") || 0, syncing: false,
+      auto: eleves().some((e) => (e.source === "pronote" ? !!pnCreds(e.compte)?.p || !!pnCreds(e.compte)?.token : !!LS.get("vs-creds"))) }));
+    if (u === "/api/sync?auto=1") return syncAll(false).then((r) => reply(r.total && r.errs.length === r.total
+      ? { ok: false, error: "Mise à jour automatique impossible : " + r.errs.join(" · ") }
+      : { ok: true, ...(r.errs.length ? { warning: "Pas à jour : " + r.errs.join(" · ") } : {}) }));
     if (u === "/api/sync") return runSync().then(reply);
     return Promise.resolve(reply({ error: "introuvable" }));
   };
@@ -895,12 +900,7 @@ return summaryMd;
     const t = document.getElementById("toast");
     const warn = LS.get("vs-warn");
     if (warn && t) { t.textContent = warn; t.hidden = false; setTimeout(() => (t.hidden = true), 8000); LS.set("vs-warn", null); }
-    // Mise à jour automatique à l'ouverture si les données ont plus de 3 h (élèves dont les identifiants sont mémorisés)
-    const auto = eleves().some((e) => (e.source === "pronote" ? LS.get("vs-pn:" + e.compte) : LS.get("vs-creds")));
-    if (auto && Date.now() - (LS.get("vs-synced-at") || 0) > STALE_MS && navigator.onLine) {
-      if (t) { t.textContent = "Mise à jour des notes…"; t.hidden = false; }
-      syncAll(false).then((r) => { if (r.errs.length < r.total) location.reload(); else if (t) { t.textContent = "Mise à jour impossible : touchez Actualiser."; setTimeout(() => (t.hidden = true), 6000); } });
-    }
+    // La mise à jour automatique à l'ouverture est lancée par le dashboard (/api/status puis /api/sync?auto=1)
   });
 
   window.VS_DATA = composeData();
@@ -1599,18 +1599,32 @@ function tagWidgets() {
   let timer;
   const say = (m, ms = 6000) => { toast.textContent = m; toast.hidden = false; clearTimeout(timer); if (ms) timer = setTimeout(() => (toast.hidden = true), ms); };
   const api = (path, post) => fetch(path, { method: post ? "POST" : "GET", headers: { "X-Vie-Scolaire": "1" } }).then((r) => r.json());
-  fetch("/api/ping", { headers: { "X-Vie-Scolaire": "1" } }).then((r) => r.ok && r.json()).then((j) => { if (j?.ok) box.hidden = false; }).catch(() => {});
+  // Message laissé par une mise à jour juste avant le rechargement (source en échec, etc.)
+  try { const w = sessionStorage.getItem("carnet-warn"); if (w) { sessionStorage.removeItem("carnet-warn"); setTimeout(() => say(w, 10000), 800); } } catch (e) {}
 
-  $("#act-sync").addEventListener("click", async (e) => {
-    const b = e.currentTarget; b.disabled = true; b.classList.add("busy");
-    say("Mise à jour en cours (notes et devoirs sur 21 jours)…", 0);
+  const AUTO_MS = 30 * 60e3; // mise à jour automatique à l'ouverture si la dernière date de plus de 30 min
+  async function doSync(auto) {
+    const b = $("#act-sync"); b.disabled = true; b.classList.add("busy");
+    say(auto ? "Mise à jour automatique des notes, devoirs et emploi du temps…" : "Mise à jour en cours (notes, devoirs, emploi du temps)…", 0);
     try {
-      const r = await api("/api/sync", true);
-      if (r.ok) { say("Données à jour. Rechargement…", 0); setTimeout(() => location.reload(), 600); return; }
+      const r = await api(auto ? "/api/sync?auto=1" : "/api/sync", true);
+      if (r.ok) {
+        try { if (r.warning) sessionStorage.setItem("carnet-warn", r.warning); } catch (e) {}
+        say("Données à jour. Rechargement…", 0); setTimeout(() => location.reload(), 600); return;
+      }
       say(r.error || "La mise à jour a échoué.", 10000);
-    } catch { say("Serveur local injoignable : relancez npm run serve.", 10000); }
+    } catch { say(auto ? "Mise à jour automatique impossible : touchez Actualiser." : "Serveur local injoignable : relancez npm run serve.", 10000); }
     b.disabled = false; b.classList.remove("busy");
-  });
+  }
+  fetch("/api/ping", { headers: { "X-Vie-Scolaire": "1" } }).then((r) => r.ok && r.json()).then(async (j) => {
+    if (!j?.ok) return;
+    box.hidden = false;
+    if (APERCU || !navigator.onLine) return;
+    const st = await api("/api/status").catch(() => null);
+    if (st?.auto && !st.syncing && Date.now() - (st.lastSync || 0) > AUTO_MS) doSync(true);
+  }).catch(() => {});
+
+  $("#act-sync").addEventListener("click", () => doSync(false));
   $("#act-resume").addEventListener("click", async () => {
     try {
       const r = await api("/api/resume");

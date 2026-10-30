@@ -5,6 +5,8 @@
 //    gardent l'ancien calcul. Forçable avec PRONOTE_CHALLENGE=v2 ou PRONOTE_CHALLENGE=legacy.
 // 3) Espace parent : chaque requête doit désigner l'enfant concerné (Signature.membre = { N: id de l'enfant, G: 4 }),
 //    sinon PRONOTE répond « accès refusé » puis ferme la session. Pawnote ne l'envoie pas.
+// 4) Connexion via un ENT (CAS) : ajoute loginENT(session, { url, kind, cookies, username: e, password: f, deviceUUID }),
+//    copie de loginCredentials avec les cookies de la session ENT, pourENT activé et la clé sans identifiant.
 // Idempotent : un fichier déjà corrigé est laissé tel quel. À retirer quand Pawnote publiera son correctif.
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -49,4 +51,55 @@ for (const f of ["dist/index.mjs", "dist/index.js"]) {
   writeFileSync(file, s);
   ok++;
 }
-console.log(`patch-pawnote : ${ok} fichier(s) prêts`);
+// (ok compte les fichiers corrigés pour les points 1 à 3)
+// ── 4) loginENT (indépendant des points 1 à 3) ──
+const ENT_MARK = "/*vs-loginENT2*/", ENT_MARK1 = "/*vs-loginENT*/";
+function fnBody(src, start) { // position juste après l'accolade fermante du corps commençant à start ("{")
+  let depth = 0, q = null;
+  for (let i = start; i < src.length; i++) {
+    const ch = src[i];
+    if (q) { if (ch === "\\") i++; else if (ch === q) q = null; continue; }
+    if (ch === '"' || ch === "'" || ch === "`") { q = ch; continue; }
+    if (ch === "{") depth++;
+    else if (ch === "}" && --depth === 0) return i + 1;
+  }
+  return -1;
+}
+function entVariant(body) {
+  // params remplaçables : sans « bydlg », PRONOTE passe par le CAS de l'ENT (et fournit e/f)
+  const out = body.replace("cookies:[]", "cookies:s.cookies??[]").replace("params:{", "params:s.params??{").replace("useCAS:!1", "useCAS:!0")
+    .replace(/(\w+)\((\w),s\.username,s\.password\)/, '$1($2,"",s.password)');
+  if (out === body || !out.includes("useCAS:!0") || !out.includes('"",s.password')) throw new Error("loginCredentials inattendu");
+  return out;
+}
+let entOk = 0;
+for (const f of ["dist/index.mjs", "dist/index.js"]) {
+  const file = path.join(dir, f);
+  if (!existsSync(file)) continue;
+  let s = readFileSync(file, "utf8");
+  if (s.includes(ENT_MARK)) { entOk++; continue; }
+  if (s.includes(ENT_MARK1)) { // première version : rendre les paramètres de page remplaçables
+    const i = s.indexOf(ENT_MARK1), j = s.indexOf("params:{", i);
+    if (j < 0) { console.error(`patch-pawnote : loginENT v1 inattendu dans ${f}`); process.exitCode = 1; continue; }
+    s = s.slice(0, j) + "params:s.params??{" + s.slice(j + "params:{".length);
+    writeFileSync(file, s.replace(ENT_MARK1, ENT_MARK)); entOk++; continue;
+  }
+  try {
+    if (f.endsWith(".mjs")) {
+      const name = /,?(\w+) as loginCredentials\b/.exec(s)?.[1];
+      const at = s.indexOf(`${name}=async(e,s)=>{`);
+      if (!name || at < 0) throw new Error("loginCredentials introuvable");
+      const b0 = at + `${name}=async(e,s)=>`.length, b1 = fnBody(s, b0);
+      const fn = `__vsLoginENT=async(e,s)=>${ENT_MARK}${entVariant(s.slice(b0, b1))},`;
+      s = s.slice(0, at) + fn + s.slice(at);
+      s = s.replace(`${name} as loginCredentials`, `${name} as loginCredentials,__vsLoginENT as loginENT`);
+    } else {
+      const at = s.indexOf("exports.loginCredentials=async(e,s)=>{");
+      if (at < 0) throw new Error("loginCredentials introuvable");
+      const b0 = at + "exports.loginCredentials=async(e,s)=>".length, b1 = fnBody(s, b0);
+      s = s.slice(0, at) + `exports.loginENT=async(e,s)=>${ENT_MARK}${entVariant(s.slice(b0, b1))},` + s.slice(at);
+    }
+    writeFileSync(file, s); entOk++;
+  } catch (e) { console.error(`patch-pawnote : loginENT non ajouté à ${f} (${e.message})`); process.exitCode = 1; }
+}
+console.log(`patch-pawnote : ${ok} fichier(s) prêts, loginENT : ${entOk}`);

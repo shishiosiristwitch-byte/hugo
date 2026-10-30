@@ -3,6 +3,8 @@
 // Renvoie les données au format du dashboard (même forme que la synchro Ecole Directe),
 // plus deux blocs propres à PRONOTE : emploi du temps (edt) et vie scolaire.
 import * as P from "pawnote";
+import { defaultFetcher } from "@literate.ink/utilities";
+import { detectEnt, loginEnt } from "./ent.mjs";
 
 const TZ = "Europe/Paris";
 const parts = (d) => Object.fromEntries(new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
@@ -24,13 +26,15 @@ const val = (g) => (g && g.kind === P.GradeKind.Grade && Number.isFinite(g.point
 /** Messages d'erreur lisibles pour l'utilisateur. */
 export function explain(e) {
   const n = e?.name || "";
-  if (n === "BadCredentialsError") return "Identifiant ou mot de passe PRONOTE incorrect.";
+  if (n === "BadCredentialsError") return /ENT|ÉduConnect/.test(e?.message ?? "") ? e.message : "Identifiant ou mot de passe PRONOTE incorrect.";
+  if (n === "SecurityError" && e?.message?.includes("ENT")) return e.message;
   if (n === "SecurityError") return "PRONOTE demande une vérification de sécurité (code PIN ou appareil à enregistrer) : connectez-vous une fois sur le site PRONOTE de l'établissement, puis réessayez.";
   if (n === "AccountDisabledError") return "Ce compte PRONOTE est désactivé.";
   if (n === "AccessDeniedError") return "Ce compte n'a pas accès à cet espace PRONOTE (élève / parent).";
   if (n === "SuspendedIPError" || n === "RateLimitedError") return "PRONOTE a temporairement bloqué les connexions : réessayez dans quelques minutes.";
   if (n === "PageUnavailableError" || n === "BusyPageError") return "Le site PRONOTE de l'établissement est indisponible ou l'adresse est incorrecte.";
   if (n === "SessionExpiredError") return "La session PRONOTE a expiré.";
+  if (n === "TypeError" && /fetch failed/i.test(e?.message || "")) return "Site PRONOTE injoignable : vérifiez l'adresse (et la connexion internet).";
   return e?.message || "Erreur PRONOTE inconnue.";
 }
 
@@ -44,24 +48,48 @@ export function parseUrl(raw) {
   return { url: P.cleanURL(u.href), kind };
 }
 
-/** Connexion : jeton mémorisé d'abord, sinon identifiant + mot de passe. */
-async function connect({ url, username, password, token, deviceUUID, kind }) {
+/**
+ * Connexion : jeton mémorisé d'abord (sans ENT), sinon identifiant + mot de passe :
+ * directement sur PRONOTE, ou via l'ENT (CAS) si PRONOTE redirige vers un ENT (ex. ENT Hauts-de-France).
+ */
+async function connect({ url, username, password, token, tokenUsername, deviceUUID, kind, connexion }) {
   const target = parseUrl(url);
-  const base = { url: target.url, kind: kind ?? target.kind, username, deviceUUID };
+  const k = kind ?? target.kind;
+  const base = { url: target.url, kind: k, deviceUUID };
   let lastErr;
   if (token) {
-    try { const s = P.createSessionHandle(); return { s, refresh: await P.loginToken(s, { ...base, token }) }; }
+    try { const s = P.createSessionHandle(); return { s, refresh: await P.loginToken(s, { ...base, username: tokenUsername || username, token }) }; }
     catch (e) { lastErr = e; if (!password) throw e; }
   }
   if (!password) throw lastErr ?? Object.assign(new Error("Mot de passe PRONOTE manquant."), { name: "BadCredentialsError" });
-  const s = P.createSessionHandle();
-  return { s, refresh: await P.loginCredentials(s, { ...base, password }) };
+  // Sans le paramètre « bydlg » (connexion directe), un établissement relié à un ENT redirige vers le CAS de l'ENT
+  const page = `${target.url}/mobile.${k === P.AccountKind.PARENT ? "parent" : "eleve"}.html?fd=1&login=true`;
+  const ent = await detectEnt(page).catch(() => null);
+  if (!ent) { const s = P.createSessionHandle(); return { s, refresh: await P.loginCredentials(s, { ...base, username, password }) }; }
+  // Via l'ENT : PRONOTE fournit, dans sa page de démarrage, des identifiants « e » / « f » valables pour la session ENT.
+  // Ils changent à chaque chargement : on garde ceux de la dernière page reçue.
+  // « connexion » : "educonnect" (défaut, parents et élèves) ou "ent" (compte ENT local)
+  const { cookies, e, f } = await loginEnt(ent, page, username, password, { mode: connexion === "ent" ? "ent" : "educonnect", profil: k === P.AccountKind.PARENT ? "relative" : "student" });
+  const cur = { e, f };
+  const fetcher = async (req) => {
+    const r = await defaultFetcher(req);
+    const m = /Start\s*\(\s*(\{[\s\S]*?\})\s*\)/.exec(r.content || "")?.[1];
+    if (m) { const e2 = /["']?e["']?\s*:\s*["']([^"']+)["']/.exec(m)?.[1], f2 = /["']?f["']?\s*:\s*["']([^"']+)["']/.exec(m)?.[1]; if (e2 && f2) Object.assign(cur, { e: e2, f: f2 }); }
+    if (process.env.ENT_DEBUG) {
+      if (m) console.log("[PN] page", String(req.url).split("?")[0].split("/").pop(), "Start", m.replace(/"(e|f)"\s*:\s*"[^"]+"/g, '"$1":"…"').slice(0, 120));
+      else { let j = null; try { j = JSON.parse(r.content); } catch {} const d = j?.dataSec?.data ?? j?.donneesSec?.donnees;
+        console.log("[PN]", j?.id ?? j?.nom ?? "?", r.status, d ? JSON.stringify(d).replace(/"(alea|challenge|cle|identifiantNav)":"[^"]+"/g, '"$1":"…"').slice(0, 260) : String(r.content).slice(0, 160)); }
+    }
+    return r;
+  };
+  const s = P.createSessionHandle(fetcher);
+  const auth = { ...base, cookies, params: { fd: "1", login: "true" } };
+  Object.defineProperty(auth, "username", { get: () => cur.e, set() {}, enumerable: true });
+  Object.defineProperty(auth, "password", { get: () => cur.f, set() {}, enumerable: true });
+  const refresh = await P.loginENT(s, auth);
+  return { s, refresh };
 }
 
-/**
- * Récupère et normalise les données PRONOTE d'un élève.
- * @param {object} o url, username, password?, token?, deviceUUID, days (devoirs/EDT à venir, 21 par défaut), childIndex (compte parent)
- */
 /** "PARENT Fanny" → "Fanny" (PRONOTE écrit le nom de famille en majuscules) */
 export const prenomDe = (nom = "") => {
   const w = nom.trim().split(/\s+/), low = w.filter((x) => x !== x.toUpperCase());
