@@ -6,7 +6,11 @@ sans stockage, appels limités à une liste blanche, protégé par la variable d
 
 - `public/` : app générée (depuis le dashboard PC via `npm run mobile` dans le projet principal)
 - `src/` : sources du shim mobile, du service worker et du manifeste
-- `api/ed.js` : fonction Vercel (relais)
+- `api/ed.js` : fonction Vercel (relais Ecole Directe)
+- `api/pronote.js` : fonction Vercel (relais PRONOTE via Pawnote, `api/_lib/pronote.mjs` copié depuis le projet principal) ; hôtes `*.index-education.net` seulement, autres hôtes via la variable `PRONOTE_HOSTS`
+- `scripts/patch-pawnote.mjs` : correctif Pawnote pour PRONOTE 2026.2, lancé à l'installation
+
+Élèves : bouton *Compte* → *Ajouter un élève PRONOTE* (prénom, adresse PRONOTE, identifiants).
 
 Aucune donnée personnelle dans ce dépôt : notes, session et identifiants restent dans le navigateur du téléphone.
 
