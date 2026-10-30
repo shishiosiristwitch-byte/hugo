@@ -1,6 +1,6 @@
 // Relais PRONOTE pour l'app mobile (fonction Vercel).
 // Le navigateur ne peut pas parler à PRONOTE (CORS, chiffrement maison) : cette fonction se connecte
-// avec Pawnote, récupère notes, devoirs, emploi du temps et vie scolaire, et renvoie le tout normalisé.
+// avec Pawnote, récupère notes, devoirs, emploi du temps et vie scolaire de chaque enfant du compte, normalisés.
 // Elle ne stocke RIEN et ne journalise rien : identifiants et jeton restent sur le téléphone,
 // ils ne font que transiter le temps de l'appel.
 import crypto from "node:crypto";
@@ -28,11 +28,13 @@ export default async function handler(req, res) {
   if (!url || !username || !deviceUUID || (!password && !token)) return res.status(400).json({ error: "Paramètres manquants." });
   try { if (!hostOk(new URL(parseUrl(url).url).hostname)) return res.status(400).json({ error: "Adresse PRONOTE non autorisée : elle doit se terminer par index-education.net." }); }
   catch (e) { return res.status(400).json({ error: e.message }); }
+  // Compte parent : "all" = tous les enfants du compte (une seule connexion), ou une liste d'index
+  const children = b.children === "all" ? "all" : Array.isArray(b.children) ? b.children.filter((i) => Number.isInteger(i) && i >= 0 && i < 20).slice(0, 10) : undefined;
   const childIndex = Number.isInteger(b.childIndex) && b.childIndex >= 0 && b.childIndex < 20 ? b.childIndex : undefined;
   const days = Number.isInteger(b.days) && b.days > 0 && b.days <= 60 ? b.days : 21;
 
   try {
-    const r = await fetchPronote({ url, username, password, token, deviceUUID, childIndex, days });
+    const r = await fetchPronote({ url, username, password, token, deviceUUID, children, childIndex, days });
     return res.status(200).json({ ok: true, ...r });
   } catch (e) {
     const auth = ["BadCredentialsError", "SecurityError", "AccountDisabledError", "AccessDeniedError"].includes(e?.name);

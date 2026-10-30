@@ -10,7 +10,7 @@ sans stockage, appels limités à une liste blanche, protégé par la variable d
 - `api/pronote.js` : fonction Vercel (relais PRONOTE via Pawnote, `api/_lib/pronote.mjs` copié depuis le projet principal) ; hôtes `*.index-education.net` seulement, autres hôtes via la variable `PRONOTE_HOSTS`
 - `scripts/patch-pawnote.mjs` : correctif Pawnote pour PRONOTE 2026.2, lancé à l'installation
 
-Élèves : bouton *Compte* → *Ajouter un élève PRONOTE* (prénom, adresse PRONOTE, identifiants).
+Élèves : bouton *Compte* → *Ajouter un compte PRONOTE* (adresse, identifiant, mot de passe). Une connexion suffit : tous les enfants du compte parent sont ajoutés ; « Rester connecté » garde les identifiants sur le téléphone.
 
 Aucune donnée personnelle dans ce dépôt : notes, session et identifiants restent dans le navigateur du téléphone.
 

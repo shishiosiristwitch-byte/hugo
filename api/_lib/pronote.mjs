@@ -62,10 +62,36 @@ async function connect({ url, username, password, token, deviceUUID, kind }) {
  * Récupère et normalise les données PRONOTE d'un élève.
  * @param {object} o url, username, password?, token?, deviceUUID, days (devoirs/EDT à venir, 21 par défaut), childIndex (compte parent)
  */
+/** "PARENT Fanny" → "Fanny" (PRONOTE écrit le nom de famille en majuscules) */
+export const prenomDe = (nom = "") => {
+  const w = nom.trim().split(/\s+/), low = w.filter((x) => x !== x.toUpperCase());
+  return low.length ? low.join(" ") : cap(w.at(-1) || "Élève");
+};
+
+/**
+ * Récupère et normalise les données PRONOTE, avec UNE connexion pour tous les enfants du compte.
+ * @param {object} o url, username, password?, token?, deviceUUID, days (21 par défaut),
+ *   children : "all" (tous les enfants du compte parent), [index…], ou absent (premier / childIndex)
+ * @returns {{ eleves: { index, nom, prenom, classe, data }[], data, enfants, refresh }}
+ */
 export async function fetchPronote(o) {
   const days = o.days ?? 21;
   const { s, refresh } = await connect(o);
-  if (o.childIndex != null && s.user.resources[o.childIndex]) P.use(s, o.childIndex);
+  const all = s.user.resources.map((_, i) => i);
+  const idx = o.children === "all" ? all : Array.isArray(o.children) ? o.children.filter((i) => all.includes(i)) : [all.includes(o.childIndex) ? o.childIndex : 0];
+  const eleves = [];
+  for (const i of idx) {
+    P.use(s, i);
+    const data = await collect(s, days);
+    eleves.push({ index: i, nom: data.eleve, prenom: prenomDe(data.eleve), classe: data.classe, data });
+  }
+  const enfants = s.user.resources.map((r, i) => ({ index: i, nom: r.name, prenom: prenomDe(r.name), classe: r.className || "" }));
+  return { eleves, data: eleves[0]?.data, enfants: enfants.length > 1 ? enfants : undefined,
+    refresh: { url: refresh.url, username: refresh.username, token: refresh.token, kind: refresh.kind } };
+}
+
+/** Données d'un élève (l'enfant sélectionné dans la session). */
+async function collect(s, days) {
   const res = s.userResource, tabs = res.tabs;
   const now = new Date(), end = new Date(now.getTime() + days * 864e5);
   const warnings = [];
@@ -139,6 +165,5 @@ export async function fetchPronote(o) {
     periodes: periods.map((p) => ({ id: p.id, nom: p.name, court: p.name.replace(/^Trimestre\s*/i, "Trim. ").replace(/^Semestre\s*/i, "Sem. "), debut: day(p.startDate), fin: day(p.endDate) })),
     officielPeriode: current?.id, officiel, notes, devoirs, edt, vieScolaire,
   };
-  const enfants = s.user.resources.length > 1 ? s.user.resources.map((r, i) => ({ index: i, nom: r.name, classe: r.className || "" })) : undefined;
-  return { data, enfants, refresh: { url: refresh.url, username: refresh.username, token: refresh.token, kind: refresh.kind } };
+  return data;
 }

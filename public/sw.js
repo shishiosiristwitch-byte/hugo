@@ -1,5 +1,5 @@
 // Service worker : l'app s'ouvre même hors ligne (dernières données gardées sur le téléphone).
-const CACHE = "carnet-v202610301402";
+const CACHE = "carnet-v202610301501";
 const SHELL = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", (e) => {
